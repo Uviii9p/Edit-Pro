@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            String          @id @default(cuid())
+  email         String          @unique
+  password      String
+  name          String?
+  role          String          @default("EDITOR")
+  image         String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  aiActivities  AIActivity[]
+  files         File[]
+  invoices      Invoice[]
+  meetings      Meeting[]
+  notifications Notification[]
+  ownedProjects Project[]       @relation("ProjectOwner")
+  bookings      StudioBooking[]
+  tasks         Task[]
+  timeLogs      TimeLog[]
+  projects      Project[]       @relation("TeamMembers")
+}
+
+model Project {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  status        String    @default("PLANNING")
+  budget        Float     @default(0)
+  deadline      DateTime?
+  revisionCount Int       @default(0)
+  archived      Boolean   @default(false)
+  ownerId       String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  files         File[]
+  invoices      Invoice[]
+  owner         User      @relation("ProjectOwner", fields: [ownerId], references: [id])
+  tasks         Task[]
+  teamMembers   User[]    @relation("TeamMembers")
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  priority    String    @default("MEDIUM")
+  status      String    @default("TODO")
+  deadline    DateTime?
+  projectId   String?
+  userId      String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id])
+  project     Project?  @relation(fields: [projectId], references: [id])
+  timeLogs    TimeLog[]
+}
+
+model Meeting {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime
+  type        String   @default("GENERAL")
+  isRecurring Boolean  @default(false)
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model StudioBooking {
+  id        String   @id @default(cuid())
+  title     String
+  startTime DateTime
+  endTime   DateTime
+  status    String   @default("PENDING")
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Invoice {
+  id            String   @id @default(cuid())
+  invoiceNumber String   @unique
+  amount        Float
+  tax           Float    @default(0)
+  taxRate       Float    @default(18)
+  status        String   @default("UNPAID")
+  projectId     String?
+  userId        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id])
+  project       Project? @relation(fields: [projectId], references: [id])
+}
+
+model TimeLog {
+  id          String   @id @default(cuid())
+  duration    Int
+  description String?
+  taskId      String?
+  userId      String
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+  task        Task?    @relation(fields: [taskId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  userId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model AIActivity {
+  id        String   @id @default(cuid())
+  prompt    String
+  response  String
+  userId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model File {
+  id        String   @id @default(cuid())
+  name      String
+  url       String
+  size      Int
+  type      String
+  projectId String?
+  userId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  project   Project? @relation(fields: [projectId], references: [id])
+}

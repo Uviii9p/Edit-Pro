@@ -1,0 +1,26 @@
+
+> editor_pro@0.1.0 dev:client
+> next dev
+
+Γû▓ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://10.120.31.36:3000
+- Environments: .env
+
+Γ£ô Starting...
+Γ£ô Ready in 1771ms
+ GET /settings 200 in 963ms (compile: 576ms, render: 387ms)
+Γ£ô Compiled in 766ms
+ GET /dashboard 200 in 187ms (compile: 151ms, render: 37ms)
+ GET /projects 200 in 150ms (compile: 99ms, render: 51ms)
+ GET /tasks 200 in 484ms (compile: 438ms, render: 46ms)
+ GET /calendar 200 in 135ms (compile: 89ms, render: 46ms)
+ GET /invoices 200 in 94ms (compile: 66ms, render: 27ms)
+ GET /tasks 200 in 36ms (compile: 6ms, render: 30ms)
+ GET /dashboard 200 in 188ms (compile: 150ms, render: 38ms)
+ GET /settings 200 in 38ms (compile: 10ms, render: 28ms)
+ GET /dashboard 200 in 36ms (compile: 8ms, render: 28ms)
+ GET /dashboard 200 in 480ms (compile: 44ms, render: 436ms)
+ GET /dashboard 200 in 79ms (compile: 9ms, render: 70ms)
+Γ£ô Compiled in 133ms
+Γ£ô Compiled in 114ms
