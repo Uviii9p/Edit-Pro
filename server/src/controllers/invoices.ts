@@ -60,76 +60,80 @@ export const generatePDF = async (req: Request, res: Response) => {
 
         doc.pipe(res);
 
-        // Helper for currency
-        const formatCurrency = (val: number) => `Rs. ${new Intl.NumberFormat('en-IN').format(val)}`;
+        // Helper for currency formatting
+        const formatCurrency = (val: number) => `₹${new Intl.NumberFormat('en-IN').format(val)}`;
 
         // --- 1. HEADER SECTION ---
-        doc.fillColor('#3b82f6').fontSize(24).text('EditPro Studio', 50, 50);
-        doc.fillColor('#64748b').fontSize(10).text('Creative Video Production & Post-Production', 50, 80);
-        doc.text('contact@editpro.studio', 50, 95);
-        doc.text('Mumbai, Maharashtra, India', 50, 110);
+        doc.fillColor('#1e293b').fontSize(22).font('Helvetica-Bold').text('EditPro Studio', 50, 50);
+        doc.fillColor('#64748b').fontSize(10).font('Helvetica').text('contact@editpro.studio', 50, 75);
+        doc.text('+91 98765 43210', 50, 88);
+        doc.text('Mumbai Digital Plaza, MH, India', 50, 101);
 
-        doc.fillColor('#0f172a').fontSize(28).text('INVOICE', 350, 50, { align: 'right' });
-        doc.fontSize(10).fillColor('#64748b').text(`Invoice #: ${invoice.invoiceNumber}`, 350, 85, { align: 'right' });
-        doc.text(`Date: ${new Date(invoice.createdAt).toLocaleDateString('en-IN')}`, 350, 100, { align: 'right' });
+        doc.fillColor('#1e40af').fontSize(28).font('Helvetica-Bold').text('INVOICE', 350, 50, { align: 'right' });
+        doc.fillColor('#334155').fontSize(10).font('Helvetica-Bold').text(`Invoice #: ${invoice.invoiceNumber}`, 350, 85, { align: 'right' });
+        doc.font('Helvetica').text(`Issued: ${new Date(invoice.createdAt).toLocaleDateString('en-IN')}`, 350, 100, { align: 'right' });
 
-        // Divider
-        doc.moveTo(50, 140).lineTo(545, 140).strokeColor('#e2e8f0').stroke();
+        // Header Divider
+        doc.moveTo(50, 130).lineTo(545, 130).strokeColor('#f1f5f9').lineWidth(2).stroke();
 
-        // --- 2. CLIENT SECTION ---
-        doc.moveDown(3);
+        // --- 2. CLIENT INFORMATION ---
         const clientY = 160;
-        doc.fillColor('#0f172a').fontSize(12).font('Helvetica-Bold').text('Bill To:', 50, clientY);
-        doc.font('Helvetica').fontSize(11).text(invoice.user?.name || 'Valued Client', 50, clientY + 20);
-        doc.fillColor('#64748b').fontSize(10).text(invoice.user?.email || '', 50, clientY + 35);
+        doc.fillColor('#64748b').fontSize(9).font('Helvetica-Bold').text('BILL TO', 50, clientY);
+        doc.fillColor('#0f172a').fontSize(14).font('Helvetica-Bold').text(invoice.user?.name || 'Valued Client', 50, clientY + 15);
+        doc.fillColor('#64748b').fontSize(10).font('Helvetica').text(invoice.user?.email || '', 50, clientY + 32);
 
-        doc.fillColor('#0f172a').font('Helvetica-Bold').text('Project Details:', 350, clientY);
-        doc.font('Helvetica').fillColor('#3b82f6').text(invoice.project?.name || 'Direct Service Billing', 350, clientY + 20);
+        doc.fillColor('#64748b').fontSize(9).font('Helvetica-Bold').text('PROJECT', 350, clientY);
+        doc.fillColor('#1e40af').fontSize(12).font('Helvetica-Bold').text(invoice.project?.name || 'Standard Service', 350, clientY + 15);
 
-        // --- 3. STATUS BADGE ---
-        const isPaid = invoice.status === 'PAID';
-        const badgeColor = isPaid ? '#10b981' : '#f59e0b';
-        const badgeBg = isPaid ? '#ecfdf5' : '#fffbeb';
-
-        doc.rect(460, clientY + 45, 85, 22).fill(badgeBg);
-        doc.fillColor(badgeColor).fontSize(10).font('Helvetica-Bold').text(invoice.status, 460, clientY + 52, { width: 85, align: 'center' });
-
-        // --- 4. AMOUNT TABLE SECTION ---
-        const tableTop = 260;
-        doc.moveDown(4);
+        // --- 3. AMOUNT TABLE ---
+        const tableTop = 250;
 
         // Table Header
-        doc.rect(50, tableTop, 495, 30).fill('#f8fafc');
-        doc.fillColor('#475569').fontSize(10).font('Helvetica-Bold').text('Description', 70, tableTop + 10);
-        doc.text('Amount', 400, tableTop + 10, { align: 'right', width: 125 });
+        doc.rect(50, tableTop, 495, 35).fill('#1e293b');
+        doc.fillColor('#ffffff').fontSize(10).font('Helvetica-Bold').text('DESCRIPTION', 70, tableTop + 13);
+        doc.text('AMOUNT', 400, tableTop + 13, { align: 'right', width: 125 });
 
-        // Table Rows
-        const row1Y = tableTop + 45;
-        doc.fillColor('#0f172a').font('Helvetica').text('Project Base Fee / Editing Services', 70, row1Y);
-        doc.text(formatCurrency(invoice.amount), 400, row1Y, { align: 'right', width: 125 });
+        // Row 1: Base Amount
+        const row1Y = tableTop + 50;
+        doc.fillColor('#0f172a').fontSize(11).font('Helvetica').text('Creative Video Production & Editing Services', 70, row1Y);
+        doc.font('Helvetica-Bold').text(formatCurrency(invoice.amount), 400, row1Y, { align: 'right', width: 125 });
 
-        const row2Y = row1Y + 30;
-        doc.fillColor('#64748b').text(`Taxes & GST (${(invoice as any).taxRate}%)`, 70, row2Y);
+        doc.moveTo(50, row1Y + 20).lineTo(545, row1Y + 20).strokeColor('#f1f5f9').lineWidth(1).stroke();
+
+        // Row 2: Tax
+        const row2Y = row1Y + 35;
+        doc.fillColor('#64748b').font('Helvetica').text(`Tax / GST (${(invoice as any).taxRate}%)`, 70, row2Y);
         doc.text(formatCurrency(invoice.tax), 400, row2Y, { align: 'right', width: 125 });
 
+        doc.moveTo(50, row2Y + 20).lineTo(545, row2Y + 20).strokeColor('#f1f5f9').stroke();
+
+        // --- 4. TOTAL & STATUS ---
+        const footerInfoY = row2Y + 60;
+
         // Total Box
-        const totalBoxY = row2Y + 40;
-        doc.rect(300, totalBoxY, 245, 50).fill('#eff6ff');
-        doc.fillColor('#1e40af').fontSize(14).font('Helvetica-Bold').text('TOTAL DUE', 320, totalBoxY + 18);
-        doc.fontSize(16).text(formatCurrency(invoice.amount + invoice.tax), 400, totalBoxY + 17, { align: 'right', width: 125 });
+        doc.rect(345, footerInfoY, 200, 60).fill('#f8fafc');
+        doc.rect(345, footerInfoY, 200, 60).strokeColor('#e2e8f0').stroke();
 
-        // Table Borders (subtle)
-        doc.rect(50, tableTop, 495, row2Y - tableTop + 25).strokeColor('#e2e8f0').stroke();
+        doc.fillColor('#475569').fontSize(10).font('Helvetica-Bold').text('TOTAL AMOUNT', 360, footerInfoY + 15);
+        doc.fillColor('#1e40af').fontSize(18).text(formatCurrency(invoice.amount + invoice.tax), 360, footerInfoY + 30, { align: 'right', width: 170 });
 
-        // --- 5. FOOTER ---
-        const footerY = 700;
-        doc.moveTo(50, footerY).lineTo(545, footerY).strokeColor('#e2e8f0').stroke();
+        // Status Badge
+        const isPaid = invoice.status === 'PAID';
+        const badgeColor = isPaid ? '#10b981' : '#ef4444';
 
-        doc.moveDown(2);
-        doc.fillColor('#0f172a').fontSize(11).font('Helvetica-Bold').text('Thank you for your business!', 50, footerY + 20, { align: 'center', width: 495 });
-        doc.fillColor('#64748b').fontSize(9).font('Helvetica').text('Payment is due within 7 days of invoice issue date. Please contact us for any billing inquiries.', 50, footerY + 40, { align: 'center', width: 495 });
+        doc.roundedRect(50, footerInfoY + 10, 80, 24, 4).fill(badgeColor);
+        doc.fillColor('#ffffff').fontSize(9).font('Helvetica-Bold').text(invoice.status, 50, footerInfoY + 18, { width: 80, align: 'center' });
 
-        doc.fillColor('#94a3b8').fontSize(8).text('Generated by EditPro Studio Manager', 50, 780, { align: 'center', width: 495 });
+        // --- 5. FOOTER SECTION ---
+        const pageBottom = 720;
+        doc.moveTo(50, pageBottom).lineTo(545, pageBottom).strokeColor('#f1f5f9').stroke();
+
+        doc.fillColor('#1e293b').fontSize(12).font('Helvetica-Bold').text('Thank you for your business!', 50, pageBottom + 20, { align: 'center', width: 495 });
+        doc.fillColor('#94a3b8').fontSize(9).font('Helvetica').text('Payment due within 7 days. For queries, email billing@editpro.studio', 50, pageBottom + 40, { align: 'center', width: 495 });
+        doc.fontSize(8).text('Generated by EditPro Studio Manager', 50, 780, { align: 'center', width: 495 });
+
+        // Table Borders (Outer)
+        doc.rect(50, tableTop, 495, 120).strokeColor('#e2e8f0').lineWidth(1).stroke();
 
         doc.end();
     } catch (error: any) {
