@@ -8,7 +8,19 @@ import { usePathname } from 'next/navigation';
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 
+import { Metadata } from 'next';
+
 const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  manifest: '/manifest.json',
+  themeColor: '#3b82f6',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'EditPro',
+  },
+};
 
 export default function RootLayout({
   children,
@@ -22,6 +34,15 @@ export default function RootLayout({
   // Close sidebar when route changes
   useEffect(() => {
     setIsSidebarOpen(false);
+
+    // Register PWA service worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('SW Registered:', reg.scope))
+          .catch(err => console.error('SW Failed:', err));
+      });
+    }
   }, [pathname]);
 
   return (

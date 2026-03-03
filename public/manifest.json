@@ -1,0 +1,17 @@
+{
+    "name": "EditPro Studio Manager",
+    "short_name": "EditPro",
+    "description": "Professional studio workspace for video editors.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#020617",
+    "theme_color": "#3b82f6",
+    "icons": [
+        {
+            "src": "/icon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}
