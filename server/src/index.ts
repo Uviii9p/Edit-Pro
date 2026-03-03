@@ -2,6 +2,10 @@ import dotenv from 'dotenv';
 dotenv.config();
 console.log('🔧 Loaded env – PORT =', process.env.PORT);
 
+if (!process.env.JWT_SECRET) {
+    console.error('⚠️ WARNING: JWT_SECRET is not defined in the environment variables!');
+}
+
 import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth';

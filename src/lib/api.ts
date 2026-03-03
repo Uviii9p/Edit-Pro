@@ -1,7 +1,13 @@
 import axios from 'axios';
 
+const getBaseURL = () => {
+    if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+    if (typeof window !== 'undefined') return window.location.origin + '/api';
+    return 'http://127.0.0.1:5000/api';
+};
+
 const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000/api',
+    baseURL: getBaseURL(),
 });
 
 api.interceptors.request.use((config) => {
