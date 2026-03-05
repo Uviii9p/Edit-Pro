@@ -1,0 +1,2 @@
+src/app/invoices/page.tsx(112,67): error TS2554: Expected 1 arguments, but got 2.
+src/app/settings/page.tsx(48,54): error TS2554: Expected 2 arguments, but got 3.

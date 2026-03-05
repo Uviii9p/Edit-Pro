@@ -1,0 +1,6 @@
+d6c8cb4 - fix: resolve typescript compilation and import errors
+51cbe9e - Add Time Tracker, Invoices, Files, and Analytics modules
+75274ba - feat: Upgrade PDF Invoice to premium SaaS design
+58ed816 - feat: Add purely client-side invoice PDF generator and local storage company details
+aa7102a - feat: Add Studio Information settings panel and Invoice PDF integration
+b155d0e - Fix API proxying, Dev server startup, and Production Express listening

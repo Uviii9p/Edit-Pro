@@ -1,377 +1,756 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import api from '@/lib/api';
-import { Plus, X, Calendar as CalendarIcon, Clock, User, MessageCircle, Edit2, Trash2 } from 'lucide-react';
+import {
+    Calendar as CalendarIcon,
+    ChevronLeft,
+    ChevronRight,
+    Plus,
+    Clock,
+    Video,
+    Users,
+    MapPin,
+    AlertCircle,
+    CheckCircle2,
+    Search,
+    Filter,
+    MoreVertical,
+    Download,
+    Printer,
+    Edit2,
+    Trash2,
+    X,
+    LayoutGrid,
+    LayoutList,
+    Activity,
+    TrendingUp,
+    Trello,
+    Zap,
+    Star,
+    Monitor,
+    Coffee
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addDays, getDay, parseISO, isWithinInterval, startOfDay, endOfDay, addHours, differenceInMinutes } from 'date-fns';
 
-interface Meeting {
+type EventType = 'SHOOT' | 'EDIT' | 'MEETING' | 'GRADING' | 'DEADLINE' | 'RENDER' | 'OTHER';
+
+interface CalendarEvent {
     id: string;
     title: string;
-    description?: string;
-    startTime: string;
-    endTime: string;
-    type: string;
+    description: string;
+    projectId: string;
+    projectName: string;
+    clientName: string;
+    type: EventType;
+    date: string; // ISO format
+    startTime: string; // HH:mm
+    endTime: string; // HH:mm
+    location: string;
+    status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
+    priority: 'LOW' | 'MEDIUM' | 'HIGH';
+    createdAt: string;
 }
 
-export default function CalendarPage() {
-    const [events, setEvents] = useState<any[]>([]);
-    const [meetings, setMeetings] = useState<Meeting[]>([]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingMeeting, setEditingMeeting] = useState<Meeting | null>(null);
-    const [selectedDate, setSelectedDate] = useState<any>(null);
-    const [selectedEvent, setSelectedEvent] = useState<Meeting | null>(null);
-    const [newMeeting, setNewMeeting] = useState({ title: '', description: '', startTime: '', endTime: '', type: 'MEETING' });
+interface StudioBooking {
+    id: string;
+    studioName: string;
+    editorName: string;
+    projectId: string;
+    startTime: string; // ISO
+    endTime: string; // ISO
+}
 
+const EVENT_TYPE_STYLES: Record<EventType, { color: string; bg: string; border: string; icon: any }> = {
+    SHOOT: { color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20', icon: Video },
+    EDIT: { color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20', icon: Monitor },
+    MEETING: { color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', icon: Users },
+    GRADING: { color: 'text-pink-400', bg: 'bg-pink-500/10', border: 'border-pink-500/20', icon: Zap },
+    DEADLINE: { color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20', icon: AlertCircle },
+    RENDER: { color: 'text-cyan-400', bg: 'bg-cyan-500/10', border: 'border-cyan-500/20', icon: Coffee },
+    OTHER: { color: 'text-slate-400', bg: 'bg-slate-500/10', border: 'border-slate-500/20', icon: Star },
+};
+
+export default function CalendarPage() {
+    // State
+    const [currentDate, setCurrentDate] = useState(new Date());
+    const [view, setView] = useState<'MONTH' | 'WEEK' | 'DAY'>('MONTH');
+    const [events, setEvents] = useState<CalendarEvent[]>([]);
+    const [projects, setProjects] = useState<any[]>([]);
+    const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+    const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+    const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filterType, setFilterType] = useState<string>('ALL');
+
+    // Form state
+    const [formData, setFormData] = useState({
+        title: '',
+        description: '',
+        projectId: '',
+        clientName: '',
+        type: 'EDIT' as EventType,
+        startTime: '09:00',
+        endTime: '10:00',
+        location: '',
+        priority: 'MEDIUM' as 'LOW' | 'MEDIUM' | 'HIGH'
+    });
+
+    const [bookingData, setBookingData] = useState({
+        studioName: 'Studio A',
+        editorName: '',
+        projectId: '',
+        startTime: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+        endTime: format(addHours(new Date(), 2), "yyyy-MM-dd'T'HH:mm")
+    });
+
+    // Refs
+    const modalRef = useRef<HTMLDivElement>(null);
+
+    // Initial Fetch
     useEffect(() => {
-        fetchMeetings();
+        fetchData();
     }, []);
 
-    const fetchMeetings = async () => {
+    const fetchData = async () => {
         try {
-            const resp = await api.get('/meetings');
-            setMeetings(resp.data);
-            const formatted = resp.data.map((m: any) => ({
-                id: m.id,
-                title: m.title,
-                start: m.startTime,
-                end: m.endTime,
-                backgroundColor: m.type === 'MEETING' ? '#0ea5e9' : '#10b981',
-                borderColor: 'transparent',
-                extendedProps: { meetingId: m.id, type: m.type, description: m.description },
-            }));
-            setEvents(formatted);
+            const [eventsResp, projectsResp] = await Promise.all([
+                api.get('/calendar'),
+                api.get('/projects')
+            ]);
+            setEvents(eventsResp.data);
+            setProjects(projectsResp.data);
         } catch (err) {
-            console.error(err);
+            console.error('Failed to fetch calendar data', err);
         }
     };
 
-    const handleDateClick = (arg: any) => {
-        setSelectedDate(arg.dateStr);
-        setEditingMeeting(null);
-        setIsModalOpen(true);
+    // Navigation
+    const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
+    const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
+    const goToToday = () => setCurrentDate(new Date());
+
+    // Month Grid Calculation
+    const monthDays = useMemo(() => {
+        const monthStart = startOfMonth(currentDate);
+        const monthEnd = endOfMonth(monthStart);
+        const startDate = startOfWeek(monthStart);
+        const endDate = endOfWeek(monthEnd);
+        return eachDayOfInterval({ start: startDate, end: endDate });
+    }, [currentDate]);
+
+    // Helpers
+    const getEventsForDay = (day: Date) => {
+        return events.filter(event => isSameDay(parseISO(event.date), day))
+            .sort((a, b) => a.startTime.localeCompare(b.startTime));
     };
 
-    const handleEventClick = (arg: any) => {
-        const meetingId = arg.event.extendedProps.meetingId;
-        const meeting = meetings.find(m => m.id === meetingId);
-        if (meeting) {
-            setSelectedEvent(meeting);
-        }
+    const handleDayClick = (day: Date) => {
+        setSelectedDate(day);
+        setFormData({ ...formData, startTime: '09:00', endTime: '10:00' });
+        setIsEventModalOpen(true);
     };
 
-    const handleCreateMeeting = async (e: React.FormEvent) => {
+    const handleSubmitEvent = async (e: React.FormEvent) => {
         e.preventDefault();
-        try {
-            const dateStr = selectedDate || new Date().toISOString().split('T')[0];
-            const start = newMeeting.startTime.includes('T') ? newMeeting.startTime.split('T')[1] : (newMeeting.startTime || '09:00');
-            const end = newMeeting.endTime.includes('T') ? newMeeting.endTime.split('T')[1] : (newMeeting.endTime || '10:00');
+        if (!selectedDate && !editingEvent) return;
 
-            await api.post('/meetings', {
-                ...newMeeting,
-                startTime: `${dateStr}T${start}`,
-                endTime: `${dateStr}T${end}`,
-            });
-            setIsModalOpen(false);
-            setNewMeeting({ title: '', description: '', startTime: '', endTime: '', type: 'MEETING' });
-            fetchMeetings();
+        const dateToUse = selectedDate || parseISO(editingEvent!.date);
+        const project = projects.find(p => p.id === formData.projectId);
+
+        const eventPayload = {
+            ...formData,
+            projectName: project?.name || 'General',
+            date: dateToUse.toISOString(),
+            status: 'PENDING'
+        };
+
+        try {
+            if (editingEvent) {
+                await api.put(`/calendar/${editingEvent.id}`, eventPayload);
+            } else {
+                await api.post('/calendar', eventPayload);
+            }
+            setIsEventModalOpen(false);
+            setEditingEvent(null);
+            fetchData();
         } catch (err) {
-            console.error(err);
-            alert('Failed to schedule meeting. Ensure dates/times are valid.');
+            console.error('Save failed', err);
         }
     };
 
-    const handleEditMeeting = async (e: React.FormEvent) => {
+    const handleDeleteEvent = async (id: string) => {
+        if (!confirm('Permanently delete this event?')) return;
+        try {
+            await api.delete(`/calendar/${id}`);
+            fetchData();
+        } catch (err) {
+            console.error('Delete failed', err);
+        }
+    };
+
+    const filteredEvents = useMemo(() => {
+        return events.filter(e => {
+            const matchesSearch = e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                e.projectName.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesFilter = filterType === 'ALL' || e.type === filterType;
+            return matchesSearch && matchesFilter;
+        });
+    }, [events, searchQuery, filterType]);
+
+    // Studio Booking Logic
+    const handleBooking = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!editingMeeting) return;
+
+        // Check for overlaps
+        const bookings = await api.get('/bookings');
+        const hasOverlap = bookings.data.some((b: StudioBooking) => {
+            if (b.studioName !== bookingData.studioName) return false;
+            const startA = parseISO(b.startTime);
+            const endA = parseISO(b.endTime);
+            const startB = parseISO(bookingData.startTime);
+            const endB = parseISO(bookingData.endTime);
+            return (startB < endA && endB > startA);
+        });
+
+        if (hasOverlap) {
+            alert('⚠️ Studio already booked for this time block!');
+            return;
+        }
+
         try {
-            await api.put(`/meetings/${editingMeeting.id}`, {
-                title: editingMeeting.title,
-                description: editingMeeting.description,
-                startTime: editingMeeting.startTime,
-                endTime: editingMeeting.endTime,
-                type: editingMeeting.type,
+            await api.post('/bookings', bookingData);
+            setIsBookingModalOpen(false);
+            // Also create a calendar event for visibility
+            const proj = projects.find(p => p.id === bookingData.projectId);
+            await api.post('/calendar', {
+                title: `Studio: ${bookingData.studioName}`,
+                description: `Editor: ${bookingData.editorName}`,
+                projectId: bookingData.projectId,
+                projectName: proj?.name || 'Studio Booking',
+                clientName: 'Internal',
+                type: 'SHOOT',
+                date: startOfDay(parseISO(bookingData.startTime)).toISOString(),
+                startTime: format(parseISO(bookingData.startTime), 'HH:mm'),
+                endTime: format(parseISO(bookingData.endTime), 'HH:mm'),
+                location: bookingData.studioName,
+                status: 'PENDING',
+                priority: 'HIGH'
             });
-            setEditingMeeting(null);
-            setIsModalOpen(false);
-            fetchMeetings();
+            fetchData();
         } catch (err) {
-            console.error(err);
-            alert('Failed to update meeting.');
-        }
-    };
-
-    const handleDeleteMeeting = async (id: string) => {
-        if (!confirm('Delete this event?')) return;
-        try {
-            await api.delete(`/meetings/${id}`);
-            setSelectedEvent(null);
-            fetchMeetings();
-        } catch (err) {
-            console.error(err);
-        }
-    };
-
-    const openEditModal = (meeting: Meeting) => {
-        setEditingMeeting(meeting);
-        setSelectedEvent(null);
-        setIsModalOpen(true);
-    };
-
-    const formatTime = (dateStr: string) => {
-        try {
-            return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        } catch {
-            return '';
-        }
-    };
-
-    const formatDate = (dateStr: string) => {
-        try {
-            return new Date(dateStr).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
-        } catch {
-            return '';
+            console.error('Booking failed', err);
         }
     };
 
     return (
-        <div className="p-4 md:p-8 space-y-8">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-2xl md:text-3xl font-bold">Studio Calendar</h1>
-                    <p className="text-sm text-slate-400">Schedule client meetings and studio bookings.</p>
+        <div className="flex flex-col h-screen bg-slate-950 text-slate-200 overflow-hidden font-sans">
+            {/* Header */}
+            <header className="flex flex-col md:flex-row items-center justify-between p-6 bg-slate-900/50 border-b border-slate-800 backdrop-blur-xl z-20 gap-4">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-indigo-600/20 text-indigo-400 rounded-2xl">
+                        <CalendarIcon size={24} />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight">Production Schedule</h1>
+                        <p className="text-xs text-slate-500 font-medium uppercase tracking-widest">{format(currentDate, 'MMMM yyyy')}</p>
+                    </div>
                 </div>
-                <button
-                    onClick={() => { setEditingMeeting(null); setSelectedDate(new Date().toISOString().split('T')[0]); setIsModalOpen(true); }}
-                    className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 px-4 md:px-6 py-2 md:py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-blue-900/40 flex items-center justify-center gap-2 text-sm md:text-base"
-                >
-                    <Plus size={18} />
-                    <span className="hidden sm:inline">Add Event</span>
-                    <span className="sm:hidden">Add</span>
-                </button>
+
+                <div className="flex items-center bg-slate-900 border border-slate-800 p-1 rounded-xl shadow-inner">
+                    <button
+                        onClick={() => setView('MONTH')}
+                        className={cn("px-4 py-2 rounded-lg text-xs font-bold transition-all", view === 'MONTH' ? "bg-slate-800 text-white shadow-lg" : "text-slate-500 hover:text-slate-300")}
+                    >Month</button>
+                    <button
+                        onClick={() => setView('WEEK')}
+                        className={cn("px-4 py-2 rounded-lg text-xs font-bold transition-all", view === 'WEEK' ? "bg-slate-800 text-white shadow-lg" : "text-slate-500 hover:text-slate-300")}
+                    >Week</button>
+                    <button
+                        onClick={() => setView('DAY')}
+                        className={cn("px-4 py-2 rounded-lg text-xs font-bold transition-all", view === 'DAY' ? "bg-slate-800 text-white shadow-lg" : "text-slate-500 hover:text-slate-300")}
+                    >Day</button>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <button onClick={prevMonth} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors"><ChevronLeft size={20} /></button>
+                    <button onClick={goToToday} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-bold transition-all border border-slate-700">Today</button>
+                    <button onClick={nextMonth} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 transition-colors"><ChevronRight size={20} /></button>
+                    <div className="w-px h-6 bg-slate-800 mx-2" />
+                    <button
+                        onClick={() => setIsBookingModalOpen(true)}
+                        className="p-2.5 bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-all shadow-lg shadow-indigo-900/20 group"
+                        title="Book Studio"
+                    >
+                        <Monitor size={18} className="group-hover:scale-110 transition-transform" />
+                    </button>
+                    <button
+                        onClick={() => { setSelectedDate(new Date()); setIsEventModalOpen(true); }}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg shadow-blue-900/30"
+                    >
+                        <Plus size={18} />
+                        <span className="hidden sm:inline">Add Event</span>
+                    </button>
+                </div>
             </header>
 
-            <div className="bg-slate-900 border border-slate-800 p-2 md:p-6 rounded-2xl md:rounded-3xl shadow-xl overflow-x-auto">
-                <div className="min-w-0 md:min-w-0">
-                    <FullCalendar
-                        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                        initialView="dayGridMonth"
-                        headerToolbar={{
-                            left: 'prev,next',
-                            center: 'title',
-                            right: 'dayGridMonth,timeGridWeek',
-                        }}
-                        events={events}
-                        dateClick={handleDateClick}
-                        eventClick={handleEventClick}
-                        height="auto"
-                        contentHeight="auto"
-                        themeSystem="standard"
-                        selectable={true}
-                        editable={true}
-                        droppable={true}
-                        dayMaxEventRows={2}
-                        fixedWeekCount={false}
-                    />
-                </div>
-            </div>
+            <div className="flex flex-1 overflow-hidden">
+                {/* Main Calendar Grid */}
+                <main className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar">
+                    {view === 'MONTH' && (
+                        <div className="bg-slate-900/30 border border-slate-800 rounded-3xl overflow-hidden backdrop-blur-sm shadow-2xl">
+                            <div className="grid grid-cols-7 border-b border-slate-800 bg-slate-900/50">
+                                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                    <div key={day} className="py-4 text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest">{day}</div>
+                                ))}
+                            </div>
+                            <div className="grid grid-cols-7 auto-rows-[120px] md:auto-rows-[160px]">
+                                {monthDays.map((day, i) => {
+                                    const dayEvents = getEventsForDay(day);
+                                    const isCurrentMonth = isSameMonth(day, currentDate);
+                                    const isToday = isSameDay(day, new Date());
 
-            {/* EVENT DETAIL POPUP */}
-            <AnimatePresence>
-                {selectedEvent && (
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-end md:items-center justify-center" onClick={() => setSelectedEvent(null)}>
-                        <motion.div
-                            initial={{ opacity: 0, y: 100 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 100 }}
-                            className="bg-slate-900 border border-slate-800 p-5 md:p-8 rounded-t-3xl md:rounded-3xl w-full max-w-md shadow-2xl"
-                            onClick={e => e.stopPropagation()}
-                        >
-                            <div className="flex justify-between items-start mb-6">
-                                <div className="flex items-center gap-3">
-                                    <div className={cn("p-2.5 rounded-xl", selectedEvent.type === 'MEETING' ? "bg-blue-500/20 text-blue-500" : "bg-emerald-500/20 text-emerald-500")}>
-                                        {selectedEvent.type === 'MEETING' ? <User size={22} /> : <CalendarIcon size={22} />}
+                                    return (
+                                        <div
+                                            key={i}
+                                            onClick={() => handleDayClick(day)}
+                                            className={cn(
+                                                "border-r border-b border-slate-800 p-2 transition-all relative group cursor-pointer hover:bg-slate-800/20",
+                                                !isCurrentMonth && "opacity-20 bg-slate-950/50"
+                                            )}
+                                        >
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className={cn(
+                                                    "text-sm font-bold w-7 h-7 flex items-center justify-center rounded-lg transition-all",
+                                                    isToday ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/40 scale-110" : "text-slate-400"
+                                                )}>
+                                                    {format(day, 'd')}
+                                                </span>
+                                                {dayEvents.length > 0 && (
+                                                    <span className="text-[10px] font-bold text-slate-600 bg-slate-800 px-1.5 py-0.5 rounded-md">
+                                                        {dayEvents.length} Tasks
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-1 overflow-hidden">
+                                                {dayEvents.slice(0, 3).map(event => (
+                                                    <div
+                                                        key={event.id}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setEditingEvent(event);
+                                                            setFormData({
+                                                                title: event.title,
+                                                                description: event.description,
+                                                                projectId: event.projectId,
+                                                                clientName: event.clientName,
+                                                                type: event.type,
+                                                                startTime: event.startTime,
+                                                                endTime: event.endTime,
+                                                                location: event.location,
+                                                                priority: event.priority
+                                                            });
+                                                            setIsEventModalOpen(true);
+                                                        }}
+                                                        className={cn(
+                                                            "px-2 py-1 rounded-md text-[10px] font-bold truncate transition-all flex items-center gap-1.5 border group/event",
+                                                            EVENT_TYPE_STYLES[event.type].bg,
+                                                            EVENT_TYPE_STYLES[event.type].color,
+                                                            EVENT_TYPE_STYLES[event.type].border,
+                                                            "hover:scale-[1.02] active:scale-95"
+                                                        )}
+                                                    >
+                                                        <div className={cn("w-1 h-1 rounded-full", EVENT_TYPE_STYLES[event.type].color.replace('text', 'bg'))} />
+                                                        {event.title}
+                                                    </div>
+                                                ))}
+                                                {dayEvents.length > 3 && (
+                                                    <div className="text-[9px] font-bold text-slate-600 pl-2">
+                                                        + {dayEvents.length - 3} more
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <button className="absolute bottom-2 right-2 p-1.5 bg-slate-800 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-indigo-600 hover:text-white">
+                                                <Plus size={12} />
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {view === 'WEEK' && (
+                        <div className="bg-slate-900/30 border border-slate-800 rounded-3xl overflow-hidden flex flex-col h-full">
+                            <div className="grid grid-cols-8 border-b border-slate-800 bg-slate-900/50">
+                                <div className="p-4 border-r border-slate-800 text-[10px] font-bold text-slate-500 uppercase">GMT+5:30</div>
+                                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((dayName, idx) => {
+                                    const day = addDays(startOfWeek(currentDate), idx);
+                                    const isToday = isSameDay(day, new Date());
+                                    return (
+                                        <div key={dayName} className="p-4 text-center border-r border-slate-800 last:border-0 flex flex-col items-center gap-1">
+                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{dayName}</span>
+                                            <span className={cn("text-lg font-bold w-10 h-10 flex items-center justify-center rounded-xl", isToday ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/40" : "text-slate-300")}>
+                                                {format(day, 'd')}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            <div className="flex-1 overflow-y-auto relative">
+                                {Array.from({ length: 24 }).map((_, hour) => (
+                                    <div key={hour} className="grid grid-cols-8 border-b border-slate-800/50 h-20 group">
+                                        <div className="p-2 border-r border-slate-800 text-[10px] font-medium text-slate-500 text-right pr-4">
+                                            {hour === 0 ? '12 AM' : hour > 12 ? `${hour - 12} PM` : `${hour} ${hour === 12 ? 'PM' : 'AM'}`}
+                                        </div>
+                                        {Array.from({ length: 7 }).map((_, dayIdx) => (
+                                            <div key={dayIdx} className="border-r border-slate-800/30 group-hover:bg-slate-800/10 transition-colors relative" />
+                                        ))}
                                     </div>
-                                    <div>
-                                        <h2 className="text-xl font-bold">{selectedEvent.title}</h2>
-                                        <span className={cn("text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full",
-                                            selectedEvent.type === 'MEETING' ? "bg-blue-500/10 text-blue-400" : "bg-emerald-500/10 text-emerald-400"
-                                        )}>
-                                            {selectedEvent.type}
-                                        </span>
-                                    </div>
+                                ))}
+                                {/* Floating Events in Week View would go here using absolute positioning */}
+                            </div>
+                        </div>
+                    )}
+
+                    {view === 'DAY' && (
+                        <div className="max-w-4xl mx-auto space-y-6">
+                            <div className="bg-slate-900/40 border border-slate-800 p-8 rounded-[2.5rem] backdrop-blur-md shadow-2xl flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-4xl font-extrabold text-white mb-2">{format(currentDate, 'EEEE')}</h2>
+                                    <p className="text-lg text-slate-400 font-medium">{format(currentDate, 'MMMM d, yyyy')}</p>
                                 </div>
-                                <button onClick={() => setSelectedEvent(null)} className="text-slate-500 hover:text-white transition-colors"><X size={22} /></button>
+                                <div className="p-6 bg-indigo-600/10 border border-indigo-500/20 rounded-3xl text-center min-w-[120px]">
+                                    <span className="text-3xl font-black text-indigo-400 block">{getEventsForDay(currentDate).length}</span>
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Sessions</span>
+                                </div>
                             </div>
 
-                            <div className="space-y-4 mb-8">
-                                <div className="flex items-center gap-3 text-sm text-slate-400">
-                                    <CalendarIcon size={16} className="text-slate-500" />
-                                    <span>{formatDate(selectedEvent.startTime)}</span>
-                                </div>
-                                <div className="flex items-center gap-3 text-sm text-slate-400">
-                                    <Clock size={16} className="text-slate-500" />
-                                    <span>{formatTime(selectedEvent.startTime)} — {formatTime(selectedEvent.endTime)}</span>
-                                </div>
-                                {selectedEvent.description && (
-                                    <div className="p-4 bg-slate-800/50 rounded-xl text-sm text-slate-300">
-                                        {selectedEvent.description}
+                            <div className="space-y-4">
+                                {getEventsForDay(currentDate).length > 0 ? (
+                                    getEventsForDay(currentDate).map(event => (
+                                        <motion.div
+                                            key={event.id}
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            className={cn(
+                                                "p-6 rounded-3xl border flex items-center gap-6 group transition-all hover:translate-x-2",
+                                                EVENT_TYPE_STYLES[event.type].bg,
+                                                EVENT_TYPE_STYLES[event.type].border
+                                            )}
+                                        >
+                                            <div className={cn("p-4 rounded-2xl", EVENT_TYPE_STYLES[event.type].bg.replace('10', '20'))}>
+                                                {(() => {
+                                                    const Icon = EVENT_TYPE_STYLES[event.type].icon;
+                                                    return <Icon className={EVENT_TYPE_STYLES[event.type].color} size={28} />;
+                                                })()}
+                                            </div>
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className={cn("px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-tighter", EVENT_TYPE_STYLES[event.type].bg, EVENT_TYPE_STYLES[event.type].color)}>
+                                                        {event.type}
+                                                    </span>
+                                                    <span className="text-xs font-bold text-slate-500">#{event.projectName}</span>
+                                                </div>
+                                                <h3 className="text-xl font-bold text-white">{event.title}</h3>
+                                                <p className="text-sm text-slate-400 flex items-center gap-2 mt-1">
+                                                    <MapPin size={14} className="text-slate-600" /> {event.location || 'Studio Main'}
+                                                </p>
+                                            </div>
+                                            <div className="text-right space-y-2">
+                                                <div className="flex items-center gap-2 font-mono text-lg font-bold text-slate-200">
+                                                    <Clock size={18} className="text-indigo-400" />
+                                                    {event.startTime} - {event.endTime}
+                                                </div>
+                                                <div className="flex justify-end gap-2 pr-1">
+                                                    <button onClick={() => { setEditingEvent(event); setFormData({ ...event }); setIsEventModalOpen(true); }} className="p-2 hover:bg-white/10 rounded-xl transition-all text-slate-400 hover:text-white"><Edit2 size={16} /></button>
+                                                    <button onClick={() => handleDeleteEvent(event.id)} className="p-2 hover:bg-red-500/10 rounded-xl transition-all text-slate-400 hover:text-red-400"><Trash2 size={16} /></button>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    ))
+                                ) : (
+                                    <div className="py-20 text-center bg-slate-900/20 border border-dashed border-slate-800 rounded-[3rem]">
+                                        <Zap size={48} className="mx-auto text-slate-700 mb-4 opacity-20" />
+                                        <h3 className="text-xl font-bold text-slate-500">Clear Skies for Today</h3>
+                                        <p className="text-sm text-slate-600 mt-1">No production sessions scheduled.</p>
+                                        <button
+                                            onClick={() => { setSelectedDate(currentDate); setIsEventModalOpen(true); }}
+                                            className="mt-6 px-6 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold transition-all border border-slate-700"
+                                        >
+                                            Schedule Session
+                                        </button>
                                     </div>
                                 )}
                             </div>
+                        </div>
+                    )}
+                </main>
 
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => openEditModal(selectedEvent)}
-                                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 rounded-xl font-bold transition-all"
-                                >
-                                    <Edit2 size={16} /> Edit
-                                </button>
-                                <button
-                                    onClick={() => handleDeleteMeeting(selectedEvent.id)}
-                                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-red-600/10 hover:bg-red-600/20 text-red-400 rounded-xl font-bold transition-all border border-red-500/20"
-                                >
-                                    <Trash2 size={16} /> Delete
+                {/* Right Panel - Daily Insights */}
+                <aside className="hidden lg:flex flex-col w-80 bg-slate-900/50 border-l border-slate-800 p-6 backdrop-blur-md overflow-y-auto custom-scrollbar">
+                    <div className="space-y-8">
+                        <section>
+                            <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                                <Activity size={14} className="text-indigo-400" /> Today's Velocity
+                            </h3>
+                            <div className="space-y-4">
+                                {getEventsForDay(new Date()).slice(0, 3).map(event => (
+                                    <div key={event.id} className="p-4 bg-slate-800/40 border border-slate-700/50 rounded-2xl hover:border-indigo-500/30 transition-all cursor-pointer group">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full capitalize", EVENT_TYPE_STYLES[event.type].bg, EVENT_TYPE_STYLES[event.type].color)}>
+                                                {event.type.toLowerCase()}
+                                            </span>
+                                            <span className="text-[10px] font-bold text-slate-600 group-hover:text-indigo-400 transition-colors">{event.startTime}</span>
+                                        </div>
+                                        <h4 className="text-sm font-bold text-slate-200 line-clamp-1">{event.title}</h4>
+                                        <p className="text-[11px] text-slate-500 mt-1 font-medium">{event.projectName}</p>
+                                    </div>
+                                ))}
+                                {getEventsForDay(new Date()).length === 0 && (
+                                    <p className="text-xs text-slate-600 italic">No events for today.</p>
+                                )}
+                            </div>
+                        </section>
+
+                        <section>
+                            <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                                <AlertCircle size={14} className="text-red-400" /> High Priority
+                            </h3>
+                            <div className="space-y-3">
+                                {events.filter(e => e.priority === 'HIGH' && e.status !== 'COMPLETED').slice(0, 4).map(event => (
+                                    <div key={event.id} className="flex items-center gap-3 p-2 group cursor-pointer">
+                                        <div className="w-1.5 h-10 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.3)] transition-all group-hover:h-12" />
+                                        <div>
+                                            <h4 className="text-sm font-bold text-slate-300">{event.title}</h4>
+                                            <p className="text-[10px] text-red-400/80 font-bold uppercase tracking-tighter">{format(parseISO(event.date), 'MMM d')}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        <div className="p-6 bg-gradient-to-br from-indigo-600 to-blue-700 rounded-3xl relative overflow-hidden group shadow-xl shadow-indigo-900/20">
+                            <Zap size={64} className="absolute -right-4 -bottom-4 text-white/10 rotate-12 transition-transform group-hover:rotate-0" />
+                            <h4 className="text-lg font-black text-white leading-tight">Pro Studio<br />Management</h4>
+                            <p className="text-[10px] font-bold text-indigo-100 uppercase tracking-widest mt-2 opacity-80">Local First • Realtime</p>
+                            <button className="mt-6 w-full py-2 bg-white text-indigo-600 rounded-xl font-bold text-xs shadow-lg transition-all hover:bg-slate-100 transform active:scale-95">Upgrade Workflow</button>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+
+            {/* EVENT MODAL */}
+            <AnimatePresence>
+                {isEventModalOpen && (
+                    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            className="bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem] w-full max-w-xl shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600" />
+
+                            <div className="flex justify-between items-center mb-8">
+                                <div className="flex items-center gap-3">
+                                    <div className={cn("p-3 rounded-2xl", EVENT_TYPE_STYLES[formData.type].bg, EVENT_TYPE_STYLES[formData.type].color)}>
+                                        <Plus size={24} />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-bold">{editingEvent ? 'Edit Session' : 'Plan New Session'}</h2>
+                                        <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">{selectedDate ? format(selectedDate, 'MMMM d, yyyy') : 'Schedule Workflow'}</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => { setIsEventModalOpen(false); setEditingEvent(null); }} className="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-500 hover:text-white">
+                                    <X size={24} />
                                 </button>
                             </div>
+
+                            <form onSubmit={handleSubmitEvent} className="space-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] pl-1">Session Title</label>
+                                    <input
+                                        autoFocus
+                                        value={formData.title}
+                                        onChange={e => setFormData({ ...formData, title: e.target.value })}
+                                        className="w-full bg-slate-800/50 p-4 rounded-2xl outline-none ring-1 ring-slate-700/50 focus:ring-2 focus:ring-blue-500 transition-all font-bold text-lg"
+                                        placeholder="e.g. Wedding Film Master Grading"
+                                        required
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] pl-1">Type</label>
+                                        <select
+                                            value={formData.type}
+                                            onChange={e => setFormData({ ...formData, type: e.target.value as EventType })}
+                                            className="w-full bg-slate-800/50 p-4 rounded-2xl outline-none ring-1 ring-slate-700/50 focus:ring-2 focus:ring-blue-500 transition-all font-bold appearance-none cursor-pointer"
+                                        >
+                                            <option value="SHOOT">🎥 Studio Shoot</option>
+                                            <option value="EDIT">🖥️ Editing Session</option>
+                                            <option value="MEETING">👥 Client Meeting</option>
+                                            <option value="GRADING">✨ Color Grading</option>
+                                            <option value="RENDER">⏳ Heavy Render</option>
+                                            <option value="DEADLINE">🚨 Project Deadline</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] pl-1">Project Link</label>
+                                        <select
+                                            value={formData.projectId}
+                                            onChange={e => setFormData({ ...formData, projectId: e.target.value })}
+                                            className="w-full bg-slate-800/50 p-4 rounded-2xl outline-none ring-1 ring-slate-700/50 focus:ring-2 focus:ring-blue-500 transition-all font-bold appearance-none cursor-pointer"
+                                            required
+                                        >
+                                            <option value="">Link a Project</option>
+                                            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] pl-1">Start Timeline</label>
+                                        <div className="relative">
+                                            <Clock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                                            <input
+                                                type="time"
+                                                value={formData.startTime}
+                                                onChange={e => setFormData({ ...formData, startTime: e.target.value })}
+                                                className="w-full bg-slate-800/50 pl-11 pr-4 py-4 rounded-2xl outline-none ring-1 ring-slate-700/50 focus:ring-2 focus:ring-blue-500 transition-all font-mono font-bold"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] pl-1">End Timeline</label>
+                                        <div className="relative">
+                                            <Clock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                                            <input
+                                                type="time"
+                                                value={formData.endTime}
+                                                onChange={e => setFormData({ ...formData, endTime: e.target.value })}
+                                                className="w-full bg-slate-800/50 pl-11 pr-4 py-4 rounded-2xl outline-none ring-1 ring-slate-700/50 focus:ring-2 focus:ring-blue-500 transition-all font-mono font-bold"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] pl-1">Location / Studio</label>
+                                    <div className="relative">
+                                        <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                                        <input
+                                            value={formData.location}
+                                            onChange={e => setFormData({ ...formData, location: e.target.value })}
+                                            className="w-full bg-slate-800/50 pl-11 pr-4 py-4 rounded-2xl outline-none ring-1 ring-slate-700/50 focus:ring-2 focus:ring-blue-500 transition-all font-bold"
+                                            placeholder="Studio B / Remote"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4 pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setIsEventModalOpen(false); setEditingEvent(null); }}
+                                        className="flex-1 py-4 font-bold text-slate-400 hover:text-white transition-all"
+                                    >Cancel</button>
+                                    <button
+                                        type="submit"
+                                        className="flex-[2] py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 rounded-2xl font-black text-sm uppercase tracking-[0.15em] shadow-xl shadow-blue-900/30 transition-all transform active:scale-95"
+                                    >
+                                        {editingEvent ? 'Confirm Edits' : 'Commit to Schedule'}
+                                    </button>
+                                </div>
+                            </form>
                         </motion.div>
                     </div>
                 )}
             </AnimatePresence>
 
-            {/* CREATE / EDIT MEETING MODAL */}
+            {/* STUDIO BOOKING MODAL */}
             <AnimatePresence>
-                {isModalOpen && (
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-end md:items-center justify-center" onClick={() => { setIsModalOpen(false); setEditingMeeting(null); }}>
+                {isBookingModalOpen && (
+                    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-4">
                         <motion.div
-                            initial={{ opacity: 0, y: 100 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 100 }}
-                            className="bg-slate-900 border border-slate-800 p-5 md:p-8 rounded-t-3xl md:rounded-3xl w-full max-w-lg shadow-2xl relative max-h-[90vh] overflow-y-auto"
-                            onClick={e => e.stopPropagation()}
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            className="bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem] w-full max-w-lg shadow-[0_0_50px_rgba(0,0,0,0.5)] relative"
                         >
-                            <div className="w-12 h-1 bg-slate-700 rounded-full mx-auto mb-4 md:hidden" />
+                            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-orange-600 to-amber-500" />
+
                             <div className="flex justify-between items-center mb-8">
                                 <div className="flex items-center gap-3">
-                                    <div className={cn("p-2 rounded-lg", editingMeeting ? "bg-amber-500/20 text-amber-500" : "bg-blue-500/20 text-blue-500")}>
-                                        {editingMeeting ? <Edit2 size={24} /> : <CalendarIcon size={24} />}
+                                    <div className="p-3 bg-orange-600/10 text-orange-400 rounded-2xl">
+                                        <Monitor size={24} />
                                     </div>
-                                    <h2 className="text-2xl font-bold">{editingMeeting ? 'Edit Event' : 'Schedule Event'}</h2>
+                                    <h2 className="text-2xl font-bold">Studio Reservation</h2>
                                 </div>
-                                <button onClick={() => { setIsModalOpen(false); setEditingMeeting(null); }} className="text-slate-500 hover:text-white transition-colors"><X size={24} /></button>
+                                <button onClick={() => setIsBookingModalOpen(false)} className="text-slate-500 hover:text-white transition-colors"><X size={24} /></button>
                             </div>
 
-                            <form onSubmit={editingMeeting ? handleEditMeeting : handleCreateMeeting} className="space-y-4">
-                                <div>
-                                    <label className="text-sm font-bold text-slate-400 block mb-1">Event Title</label>
-                                    <input
-                                        value={editingMeeting ? editingMeeting.title : newMeeting.title}
-                                        onChange={e => editingMeeting
-                                            ? setEditingMeeting({ ...editingMeeting, title: e.target.value })
-                                            : setNewMeeting({ ...newMeeting, title: e.target.value })
-                                        }
-                                        className="w-full bg-slate-800 p-3 rounded-xl outline-none ring-1 ring-slate-700 focus:ring-2 focus:ring-blue-500"
-                                        placeholder="Enter title..."
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="text-sm font-bold text-slate-400 block mb-1">Description</label>
-                                    <textarea
-                                        value={editingMeeting ? (editingMeeting.description || '') : newMeeting.description}
-                                        onChange={e => editingMeeting
-                                            ? setEditingMeeting({ ...editingMeeting, description: e.target.value })
-                                            : setNewMeeting({ ...newMeeting, description: e.target.value })
-                                        }
-                                        className="w-full bg-slate-800 p-3 rounded-xl outline-none ring-1 ring-slate-700 focus:ring-2 focus:ring-blue-500 h-20"
-                                        placeholder="Add notes..."
-                                    />
-                                </div>
-
-                                {editingMeeting ? (
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="text-sm font-bold text-slate-400 block mb-1">Start</label>
-                                            <input
-                                                type="datetime-local"
-                                                value={editingMeeting.startTime ? editingMeeting.startTime.slice(0, 16) : ''}
-                                                onChange={e => setEditingMeeting({ ...editingMeeting, startTime: e.target.value })}
-                                                className="w-full bg-slate-800 p-3 rounded-xl outline-none ring-1 ring-slate-700 focus:ring-2 focus:ring-blue-500"
-                                                required
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-sm font-bold text-slate-400 block mb-1">End</label>
-                                            <input
-                                                type="datetime-local"
-                                                value={editingMeeting.endTime ? editingMeeting.endTime.slice(0, 16) : ''}
-                                                onChange={e => setEditingMeeting({ ...editingMeeting, endTime: e.target.value })}
-                                                className="w-full bg-slate-800 p-3 rounded-xl outline-none ring-1 ring-slate-700 focus:ring-2 focus:ring-blue-500"
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="text-sm font-bold text-slate-400 block mb-1">Start Time</label>
-                                            <input
-                                                type="time"
-                                                onChange={e => setNewMeeting({ ...newMeeting, startTime: `${selectedDate}T${e.target.value}` })}
-                                                className="w-full bg-slate-800 p-3 rounded-xl outline-none ring-1 ring-slate-700 focus:ring-2 focus:ring-blue-500"
-                                                required
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-sm font-bold text-slate-400 block mb-1">End Time</label>
-                                            <input
-                                                type="time"
-                                                onChange={e => setNewMeeting({ ...newMeeting, endTime: `${selectedDate}T${e.target.value}` })}
-                                                className="w-full bg-slate-800 p-3 rounded-xl outline-none ring-1 ring-slate-700 focus:ring-2 focus:ring-blue-500"
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div>
-                                    <label className="text-sm font-bold text-slate-400 block mb-1">Event Type</label>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <button
-                                            type="button"
-                                            onClick={() => editingMeeting
-                                                ? setEditingMeeting({ ...editingMeeting, type: 'MEETING' })
-                                                : setNewMeeting({ ...newMeeting, type: 'MEETING' })
-                                            }
-                                            className={cn("p-3 rounded-xl border text-sm font-bold transition-all flex items-center justify-center gap-2",
-                                                (editingMeeting ? editingMeeting.type : newMeeting.type) === 'MEETING'
-                                                    ? "bg-blue-600 border-blue-500" : "bg-slate-800 border-slate-700 text-slate-400")}
+                            <form onSubmit={handleBooking} className="space-y-6">
+                                <div className="grid grid-cols-1 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.1em] pl-1">Target Studio</label>
+                                        <select
+                                            value={bookingData.studioName}
+                                            onChange={e => setBookingData({ ...bookingData, studioName: e.target.value })}
+                                            className="w-full bg-slate-800/50 p-4 rounded-2xl outline-none ring-1 ring-slate-700/50 focus:ring-2 focus:ring-orange-500 transition-all font-bold appearance-none"
                                         >
-                                            <User size={16} /> Client Meeting
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => editingMeeting
-                                                ? setEditingMeeting({ ...editingMeeting, type: 'BOOKING' })
-                                                : setNewMeeting({ ...newMeeting, type: 'BOOKING' })
-                                            }
-                                            className={cn("p-3 rounded-xl border text-sm font-bold transition-all flex items-center justify-center gap-2",
-                                                (editingMeeting ? editingMeeting.type : newMeeting.type) === 'BOOKING'
-                                                    ? "bg-emerald-600 border-emerald-500" : "bg-slate-800 border-slate-700 text-slate-400")}
-                                        >
-                                            <CalendarIcon size={16} /> Studio Booking
-                                        </button>
+                                            <option value="Studio A">Studio A (DaVinci Grading Suite)</option>
+                                            <option value="Studio B">Studio B (Dubbing & Sound)</option>
+                                            <option value="Studio C">Studio C (Green Screen)</option>
+                                            <option value="Booth 1">Booth 1 (Podcast & VO)</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.1em] pl-1">Editor Name</label>
+                                        <input
+                                            value={bookingData.editorName}
+                                            onChange={e => setBookingData({ ...bookingData, editorName: e.target.value })}
+                                            className="w-full bg-slate-800/50 p-4 rounded-2xl outline-none ring-1 ring-slate-700/50 focus:ring-2 focus:ring-orange-500 transition-all font-bold"
+                                            placeholder="Lead Editor Name"
+                                            required
+                                        />
                                     </div>
                                 </div>
 
-                                <button type="submit" className="w-full py-4 bg-blue-600 hover:bg-blue-700 rounded-xl font-bold mt-4 shadow-lg shadow-blue-900/40 transition-all">
-                                    {editingMeeting ? 'Save Changes' : 'Confirm Appointment'}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2 text-white">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.1em] pl-1">Session In</label>
+                                        <input
+                                            type="datetime-local"
+                                            value={bookingData.startTime}
+                                            onChange={e => setBookingData({ ...bookingData, startTime: e.target.value })}
+                                            className="w-full bg-slate-800/50 p-4 rounded-2xl outline-none ring-1 ring-slate-700/50 focus:ring-2 focus:ring-orange-500 transition-all font-bold text-sm"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2 text-white">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.1em] pl-1">Session Out</label>
+                                        <input
+                                            type="datetime-local"
+                                            value={bookingData.endTime}
+                                            onChange={e => setBookingData({ ...bookingData, endTime: e.target.value })}
+                                            className="w-full bg-slate-800/50 p-4 rounded-2xl outline-none ring-1 ring-slate-700/50 focus:ring-2 focus:ring-orange-500 transition-all font-bold text-sm"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <button type="submit" className="w-full py-4 bg-orange-600 hover:bg-orange-500 rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-xl shadow-orange-900/20 transition-all transform active:scale-[0.98]">
+                                    Lock Reservation
                                 </button>
                             </form>
                         </motion.div>
@@ -380,25 +759,27 @@ export default function CalendarPage() {
             </AnimatePresence>
 
             <style jsx global>{`
-        .fc { --fc-border-color: #1e293b; --fc-button-bg-color: #1e293b; --fc-button-border-color: #334155; --fc-today-bg-color: #1e293b; }
-        .fc-theme-standard td, .fc-theme-standard th { border: 1px solid #1e293b; }
-        .fc-button-primary:not(:disabled).fc-button-active, .fc-button-primary:not(:disabled):active { background-color: #2563eb !important; }
-        .fc-daygrid-day:hover { background-color: #0f172a; cursor: pointer; }
-        .fc-event { border-radius: 6px; padding: 2px 4px; font-weight: bold; font-size: 11px; cursor: pointer; }
-        .fc-event:hover { opacity: 0.85; }
-        .fc-toolbar { flex-wrap: wrap; gap: 8px; }
-        .fc-toolbar-title { font-size: 1.1rem !important; }
-        .fc .fc-button { padding: 4px 10px; font-size: 12px; }
-        @media (max-width: 640px) {
-          .fc-toolbar { justify-content: center !important; }
-          .fc-toolbar-title { font-size: 0.9rem !important; width: 100%; text-align: center; order: -1; }
-          .fc-toolbar-chunk { display: flex; justify-content: center; }
-          .fc .fc-button { padding: 6px 8px; font-size: 11px; }
-          .fc-col-header-cell-cushion { font-size: 10px; }
-          .fc-daygrid-day-number { font-size: 11px; padding: 2px 4px !important; }
-          .fc-event { font-size: 9px; padding: 1px 3px; }
-        }
-      `}</style>
+                .custom-scrollbar::-webkit-scrollbar {
+                    width: 6px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: #1e293b;
+                    border-radius: 10px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: #334155;
+                }
+                
+                input[type="time"]::-webkit-calendar-picker-indicator,
+                input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+                    filter: invert(1);
+                    cursor: pointer;
+                }
+            `}</style>
         </div>
     );
 }
+

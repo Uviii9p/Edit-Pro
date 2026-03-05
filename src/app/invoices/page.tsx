@@ -9,6 +9,12 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import dynamic from 'next/dynamic';
+import { useRef } from 'react';
+
+// Dynamically import html2pdf to avoid SSR issues
+const html2pdf = typeof window !== 'undefined' ? require('html2pdf.js') : null;
+
 
 export default function InvoicesPage() {
     const [invoices, setInvoices] = useState<any[]>([]);
@@ -45,6 +51,8 @@ export default function InvoicesPage() {
     }, [editingInvoice?.amount, editingInvoice?.tax]);
     const [projects, setProjects] = useState<any[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [pdfInvoice, setPdfInvoice] = useState<any>(null);
+    const invoiceRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         fetchInvoices();
@@ -107,19 +115,25 @@ export default function InvoicesPage() {
         }
     };
 
-    const downloadPDF = async (id: string, number: string) => {
-        try {
-            const response = await api.get(`/invoices/${id}/pdf`, { responseType: 'blob' });
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `invoice-${number}.pdf`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-        } catch (err) {
-            console.error(err);
-        }
+    const downloadPDF = async (invoice: any) => {
+        setPdfInvoice(invoice);
+
+        // Wait for state update and rendering
+        setTimeout(() => {
+            if (!invoiceRef.current || !html2pdf) return;
+
+            const opt = {
+                margin: 10,
+                filename: `invoice-${invoice.invoiceNumber}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 3, useCORS: true, letterRendering: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().from(invoiceRef.current).set(opt).save().then(() => {
+                setPdfInvoice(null);
+            });
+        }, 500);
     };
 
     const filteredInvoices = invoices.filter(i =>
@@ -220,7 +234,7 @@ export default function InvoicesPage() {
                                             <Edit2 size={16} />
                                         </button>
                                         <button
-                                            onClick={() => downloadPDF(invoice.id, invoice.invoiceNumber)}
+                                            onClick={() => downloadPDF(invoice)}
                                             className="p-2 hover:bg-slate-700/50 rounded-lg text-slate-400 hover:text-emerald-400 transition-all"
                                             title="Download PDF"
                                         >
@@ -476,6 +490,82 @@ export default function InvoicesPage() {
                     </div>
                 )}
             </AnimatePresence>
+            {/* Hidden PDF Template for generation */}
+            <div className="hidden">
+                <div ref={invoiceRef} className="p-12 bg-white text-slate-950 w-[210mm] min-h-[297mm] font-sans">
+                    {pdfInvoice && (
+                        <div className="space-y-12">
+                            <div className="flex justify-between items-start border-b-4 border-blue-600 pb-8">
+                                <div>
+                                    <h1 className="text-5xl font-black text-blue-600 tracking-tighter">INVOICE</h1>
+                                    <p className="text-xl font-bold mt-2 text-slate-500">#{pdfInvoice.invoiceNumber}</p>
+                                </div>
+                                <div className="text-right">
+                                    <h2 className="text-2xl font-black">EditPro Studio</h2>
+                                    <p className="text-sm font-bold text-slate-500">Premium Video Production</p>
+                                    <p className="text-xs text-slate-400 mt-1">contact@editpro.studio</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-12">
+                                <div className="space-y-2">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Billed To</p>
+                                    <h3 className="text-xl font-bold">{pdfInvoice.project?.client?.name || 'Valued Client'}</h3>
+                                    <p className="text-sm text-slate-500 font-medium">{pdfInvoice.project?.name || 'Professional Services'}</p>
+                                </div>
+                                <div className="text-right space-y-2">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Date Issued</p>
+                                    <h3 className="text-lg font-bold">{new Date(pdfInvoice.createdAt).toLocaleDateString()}</h3>
+                                    <p className="text-sm text-slate-500 font-medium">Due: Upon Receipt</p>
+                                </div>
+                            </div>
+
+                            <div className="mt-12">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="border-b-2 border-slate-200">
+                                            <th className="py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Description</th>
+                                            <th className="py-4 text-right text-xs font-black text-slate-400 uppercase tracking-widest">Line Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        <tr>
+                                            <td className="py-6">
+                                                <h4 className="font-bold text-lg">{pdfInvoice.project?.name || 'Video Editing Services'}</h4>
+                                                <p className="text-sm text-slate-500">Cinematic Post-Production & Delivery</p>
+                                            </td>
+                                            <td className="py-6 text-right font-bold text-lg">₹{(pdfInvoice.amount || 0).toLocaleString()}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div className="flex justify-end pt-12">
+                                <div className="w-80 space-y-4">
+                                    <div className="flex justify-between text-sm font-bold text-slate-500">
+                                        <span>Subtotal</span>
+                                        <span>₹{(pdfInvoice.amount || 0).toLocaleString()}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm font-bold text-slate-500">
+                                        <span>Tax ({pdfInvoice.taxRate || 18}%)</span>
+                                        <span>₹{(pdfInvoice.tax || 0).toLocaleString()}</span>
+                                    </div>
+                                    <div className="h-px bg-slate-200" />
+                                    <div className="flex justify-between text-2xl font-black text-blue-600">
+                                        <span>TOTAL</span>
+                                        <span>₹{((pdfInvoice.amount || 0) + (pdfInvoice.tax || 0)).toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-24 pt-12 border-t border-slate-100 text-center">
+                                <p className="text-sm font-black text-blue-600/50 uppercase tracking-[0.3em]">Thank you for your business</p>
+                                <p className="text-[10px] text-slate-400 mt-2 font-medium">© 2026 EditPro Studio. All Rights Reserved.</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
     );
 }

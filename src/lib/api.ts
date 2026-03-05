@@ -17,7 +17,9 @@ const STORAGE_KEYS = {
     NOTIFICATIONS: 'editpro_notifications',
     DELIVERIES: 'editpro_deliveries',
     TIMER_LOGS: 'editpro_timer_logs',
-    FILES: 'editpro_files'
+    FILES: 'editpro_files',
+    CALENDAR_EVENTS: 'editpro_calendar_events',
+    STUDIO_BOOKINGS: 'editpro_studio_bookings'
 };
 
 const getFromStorage = (key: string, defaultVal: any = []) => {
@@ -86,7 +88,9 @@ const api = {
             '/invoices': STORAGE_KEYS.INVOICES,
             '/files': STORAGE_KEYS.FILES,
             '/delivery': STORAGE_KEYS.DELIVERIES,
-            '/timer': STORAGE_KEYS.TIMER_LOGS
+            '/timer': STORAGE_KEYS.TIMER_LOGS,
+            '/calendar': STORAGE_KEYS.CALENDAR_EVENTS,
+            '/bookings': STORAGE_KEYS.STUDIO_BOOKINGS
         };
 
         const key = Object.keys(keyMap).find(k => endpoint.startsWith(k));
@@ -120,7 +124,9 @@ const api = {
             '/equipment': STORAGE_KEYS.EQUIPMENT,
             '/invoices': STORAGE_KEYS.INVOICES,
             '/files': STORAGE_KEYS.FILES,
-            '/timer': STORAGE_KEYS.TIMER_LOGS
+            '/timer': STORAGE_KEYS.TIMER_LOGS,
+            '/calendar': STORAGE_KEYS.CALENDAR_EVENTS,
+            '/bookings': STORAGE_KEYS.STUDIO_BOOKINGS
         };
 
         const key = Object.keys(keyMap).find(k => endpoint.startsWith(k));
@@ -150,7 +156,9 @@ const api = {
             '/tasks': STORAGE_KEYS.TASKS,
             '/clients': STORAGE_KEYS.CLIENTS,
             '/invoices': STORAGE_KEYS.INVOICES,
-            '/files': STORAGE_KEYS.FILES
+            '/files': STORAGE_KEYS.FILES,
+            '/calendar': STORAGE_KEYS.CALENDAR_EVENTS,
+            '/bookings': STORAGE_KEYS.STUDIO_BOOKINGS
         };
 
         const key = Object.keys(keyMap).find(k => endpoint.startsWith(k));
@@ -175,7 +183,9 @@ const api = {
             '/clients': STORAGE_KEYS.CLIENTS,
             '/invoices': STORAGE_KEYS.INVOICES,
             '/files': STORAGE_KEYS.FILES,
-            '/timer': STORAGE_KEYS.TIMER_LOGS
+            '/timer': STORAGE_KEYS.TIMER_LOGS,
+            '/calendar': STORAGE_KEYS.CALENDAR_EVENTS,
+            '/bookings': STORAGE_KEYS.STUDIO_BOOKINGS
         };
 
         const key = Object.keys(keyMap).find(k => endpoint.startsWith(k));

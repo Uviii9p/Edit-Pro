@@ -12,6 +12,8 @@ import {
     Tooltip, ResponsiveContainer, AreaChart, Area
 } from 'recharts';
 import { motion } from 'framer-motion';
+import { format, parseISO, isSameDay } from 'date-fns';
+
 
 export default function DashboardPage() {
     const [data, setData] = useState<any>(null);
@@ -21,8 +23,11 @@ export default function DashboardPage() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await api.get('/dashboard');
-                setData(response.data);
+                const [dashResp, calResp] = await Promise.all([
+                    api.get('/dashboard'),
+                    api.get('/calendar')
+                ]);
+                setData({ ...dashResp.data, calendarEvents: calResp.data });
             } catch (err) {
                 console.error(err);
             } finally {
@@ -159,6 +164,56 @@ export default function DashboardPage() {
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
+                </div>
+
+                {/* Studio Schedule Widget */}
+                <div className="glass-panel p-8 bg-slate-900/50 flex flex-col">
+                    <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20 text-blue-400">
+                                <Calendar size={20} />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold">Studio Schedule</h3>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Today's Sessions</p>
+                            </div>
+                        </div>
+                        <button onClick={() => window.location.href = '/calendar'} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400">
+                            <ArrowUpRight size={18} />
+                        </button>
+                    </div>
+
+                    <div className="space-y-4 flex-1">
+                        {data?.calendarEvents?.filter((e: any) => isSameDay(parseISO(e.date), new Date())).length > 0 ? (
+                            data.calendarEvents
+                                .filter((e: any) => isSameDay(parseISO(e.date), new Date()))
+                                .slice(0, 4)
+                                .map((event: any) => (
+                                    <div key={event.id} className="p-4 bg-slate-950/40 rounded-2xl border border-slate-800/50 hover:border-blue-500/20 transition-all group">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <span className="text-[9px] font-black bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-md uppercase tracking-tighter">
+                                                {event.type}
+                                            </span>
+                                            <span className="text-[10px] font-mono font-bold text-slate-500">{event.startTime} - {event.endTime}</span>
+                                        </div>
+                                        <h4 className="text-sm font-bold text-slate-200 line-clamp-1">{event.title}</h4>
+                                        <p className="text-[11px] text-slate-500 mt-1 font-medium italic">Project: {event.projectName}</p>
+                                    </div>
+                                ))
+                        ) : (
+                            <div className="flex flex-col items-center justify-center py-12 text-slate-600 border border-dashed border-slate-800 rounded-3xl">
+                                <Clock size={32} className="mb-2 opacity-20" />
+                                <p className="text-xs font-bold uppercase tracking-widest opacity-40">No sessions today</p>
+                            </div>
+                        )}
+                    </div>
+
+                    <button
+                        onClick={() => window.location.href = '/calendar'}
+                        className="w-full py-3 mt-6 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border border-blue-500/20"
+                    >
+                        Open Full Calendar
+                    </button>
                 </div>
 
                 {/* AI Insights Sidebar */}
