@@ -32,97 +32,177 @@ export default function DashboardPage() {
         fetchData();
     }, []);
 
-    if (loading) return <div className="p-8">Loading dashboard...</div>;
+    if (loading) return (
+        <div className="p-8 space-y-8 animate-pulse">
+            <div className="h-20 bg-slate-800/50 rounded-2xl w-1/3"></div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-slate-800/30 rounded-2xl"></div>)}
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 h-[400px] bg-slate-800/30 rounded-2xl"></div>
+                <div className="h-[400px] bg-slate-800/30 rounded-2xl"></div>
+            </div>
+        </div>
+    );
 
     const stats = [
-        { label: "Today's Tasks", value: data?.todayTasks?.length || 0, icon: CheckCircle, color: "text-emerald-400" },
-        { label: "Upcoming Meetings", value: data?.upcomingMeetings?.length || 0, icon: Calendar, color: "text-blue-400" },
-        { label: "Monthly Revenue", value: `₹${data?.revenueThisMonth?.toLocaleString() || 0}`, icon: IndianRupee, color: "text-amber-400" },
+        { label: "Active Projects", value: data?.activeProjectsCount || 0, icon: Briefcase, color: "text-blue-400" },
+        { label: "Revenue (Month)", value: `₹${data?.revenueThisMonth?.toLocaleString() || 0}`, icon: IndianRupee, color: "text-emerald-400" },
+        { label: "Pending Invoices", value: `₹${data?.pendingRevenue?.toLocaleString() || 0}`, icon: Clock, color: "text-amber-400" },
         { label: "Completion Rate", value: `${Math.round(data?.taskCompletionRate || 0)}%`, icon: TrendingUp, color: "text-purple-400" },
     ];
 
-    const chartData = data?.weeklyRevenue || [];
-
     return (
-        <div className="p-4 md:p-8 space-y-8">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-2xl md:text-3xl font-bold">Welcome back, {user?.name}!</h1>
-                    <p className="text-sm text-slate-400 mt-1">Here's what's happening in your studio today.</p>
+        <div className="p-6 md:p-10 space-y-10">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                <div className="space-y-1">
+                    <h1 className="text-3xl font-bold text-gradient">Welcome, {user?.name?.split(' ')[0]}</h1>
+                    <p className="text-slate-400 font-medium">Your studio engine is running at peak performance.</p>
                 </div>
-                <div className="flex -space-x-2">
-                    <img src={user?.image || `https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=0D8ABC&color=fff`} className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-slate-900" />
+                <div className="flex items-center gap-4 bg-slate-900/40 p-1.5 pl-4 rounded-2xl border border-slate-800/50 backdrop-blur-sm">
+                    <div className="text-right">
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Total Yearly Revenue</p>
+                        <p className="font-bold text-emerald-400 tracking-tight">₹{data?.revenueThisYear?.toLocaleString() || 0}</p>
+                    </div>
+                    <img
+                        src={user?.image || `https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=3b82f6&color=fff`}
+                        className="w-10 h-10 rounded-xl border border-slate-700/50 object-cover"
+                    />
                 </div>
             </header>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {stats.map((stat, idx) => (
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.1 }}
+                        transition={{ delay: idx * 0.1, ease: [0.23, 1, 0.32, 1] }}
                         key={stat.label}
-                        className="p-4 md:p-6 bg-slate-900 rounded-2xl border border-slate-800 hover:border-slate-700 transition-all group"
+                        className="glass-card p-6 relative overflow-hidden group"
                     >
-                        <div className="flex justify-between items-start">
-                            <div className={`p-3 rounded-xl bg-slate-800 ${stat.color} group-hover:scale-110 transition-transform`}>
-                                <stat.icon size={24} />
+                        <div className="relative z-10 flex justify-between items-start">
+                            <div className={`p-2.5 rounded-lg bg-slate-950/50 ${stat.color} group-hover:scale-110 transition-transform duration-300 border border-slate-800/50`}>
+                                <stat.icon size={20} />
                             </div>
-                            <ArrowUpRight className="text-slate-600 group-hover:text-slate-400 transition-colors" size={20} />
+                            <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">+12% vs last month</div>
                         </div>
-                        <div className="mt-4">
-                            <p className="text-slate-400 text-sm font-medium">{stat.label}</p>
-                            <h3 className="text-xl md:text-3xl font-bold mt-1">{stat.value}</h3>
+                        <div className="mt-5 relative z-10">
+                            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest leading-none">{stat.label}</p>
+                            <h3 className="text-3xl font-bold mt-2 tracking-tight">{stat.value}</h3>
                         </div>
+                        {/* Decorative Gradient Glow */}
+                        <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-blue-500/5 blur-[40px] rounded-full group-hover:bg-blue-500/10 transition-colors duration-500" />
                     </motion.div>
                 ))}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Revenue Chart */}
-                <div className="lg:col-span-2 p-6 bg-slate-900 rounded-2xl border border-slate-800">
-                    <h3 className="text-xl font-bold mb-6">Revenue Overview</h3>
-                    <div className="h-[200px] md:h-[300px]">
+                <div className="lg:col-span-2 glass-panel p-8">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h3 className="text-xl font-bold text-white">Financial Growth</h3>
+                            <p className="text-sm text-slate-400">Weekly revenue performance tracking</p>
+                        </div>
+                        <div className="flex gap-2">
+                            <button className="px-3 py-1 text-xs font-bold rounded-lg bg-blue-600/10 text-blue-400 border border-blue-500/20">WEEK</button>
+                            <button className="px-3 py-1 text-xs font-bold rounded-lg hover:bg-slate-800 transition-colors">MONTH</button>
+                        </div>
+                    </div>
+
+                    <div className="h-[320px] w-full mt-4">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={chartData}>
+                            <AreaChart data={data?.weeklyRevenue || []} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.25} />
                                         <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-                                <XAxis dataKey="name" stroke="#64748b" axisLine={false} tickLine={false} />
-                                <YAxis stroke="#64748b" axisLine={false} tickLine={false} />
+                                <XAxis
+                                    dataKey="name"
+                                    stroke="#475569"
+                                    fontSize={12}
+                                    fontWeight={500}
+                                    axisLine={false}
+                                    tickLine={false}
+                                    dy={10}
+                                />
+                                <YAxis
+                                    stroke="#475569"
+                                    fontSize={11}
+                                    fontWeight={600}
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tickFormatter={(v) => `₹${v / 1000}k`}
+                                />
                                 <Tooltip
-                                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px' }}
+                                    contentStyle={{
+                                        backgroundColor: '#0f172a',
+                                        border: '1px solid rgba(255,255,255,0.05)',
+                                        borderRadius: '12px',
+                                        boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+                                    }}
+                                    cursor={{ stroke: '#334155', strokeWidth: 1 }}
                                     formatter={(value: any) => [`₹${Number(value || 0).toLocaleString()}`, "Revenue"]}
                                 />
-                                <Area type="monotone" dataKey="revenue" stroke="#3b82f6" fillOpacity={1} fill="url(#colorRevenue)" strokeWidth={3} />
+                                <Area
+                                    type="monotone"
+                                    dataKey="revenue"
+                                    stroke="#3b82f6"
+                                    fillOpacity={1}
+                                    fill="url(#colorRevenue)"
+                                    strokeWidth={4}
+                                    animationDuration={1500}
+                                />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
-                {/* AI Proposals */}
-                <div className="p-6 bg-slate-900 rounded-2xl border border-slate-800">
-                    <div className="flex items-center gap-2 mb-6">
-                        <TrendingUp className="text-blue-400" />
-                        <h3 className="text-xl font-bold">AI Studio Insight</h3>
-                    </div>
-                    <div className="space-y-4">
-                        <div className="p-4 bg-slate-800 rounded-xl border-l-4 border-blue-500">
-                            <p className="text-sm font-semibold">Productivity Tip</p>
-                            <p className="text-xs text-slate-400 mt-1">You're most productive between 10 AM and 1 PM. Schedule high-complexity editing during this window.</p>
+                {/* AI Insights Sidebar */}
+                <div className="space-y-6">
+                    <div className="glass-panel p-8 h-full bg-slate-900/50">
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center border border-indigo-500/20">
+                                <TrendingUp className="text-indigo-400" size={20} />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold">Studio Intelligence</h3>
+                                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">AI Insight Feed</p>
+                            </div>
                         </div>
-                        <div className="p-4 bg-slate-800 rounded-xl border-l-4 border-emerald-500">
-                            <p className="text-sm font-semibold">Deadline Alert</p>
-                            <p className="text-xs text-slate-400 mt-1">Project 'Cinematic Vlog' is due in 48 hours. You have 3 pending revision tasks.</p>
+
+                        <div className="space-y-5">
+                            <div className="group cursor-help">
+                                <div className="p-4 bg-slate-950/40 rounded-2xl border border-slate-800/50 group-hover:border-blue-500/30 transition-all">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Efficiency suggest</span>
+                                    </div>
+                                    <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                                        Shift your rough-cut editing tasks to morning slots (9 AM - 11 AM) for a <span className="text-blue-400 font-bold">15% speed increase</span>.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="group cursor-help">
+                                <div className="p-4 bg-slate-950/40 rounded-2xl border border-slate-800/50 group-hover:border-emerald-500/30 transition-all">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Revenue Forecast</span>
+                                    </div>
+                                    <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                                        Based on current active projects, you're projected to hit <span className="text-emerald-400 font-bold">₹1.2L additional revenue</span> by end of quarter.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <button className="w-full py-4 mt-6 bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all text-slate-300">
+                                Upgrade Insights
+                            </button>
                         </div>
-                        <button className="w-full py-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-bold transition-colors">
-                            Refresh Insights
-                        </button>
                     </div>
                 </div>
             </div>

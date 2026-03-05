@@ -88,11 +88,34 @@ export const getDashboardData = async (req: any, res: Response) => {
             };
         }));
 
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+        const activeProjectsCount = await prisma.project.count({
+            where: { ownerId: userId, status: { not: 'COMPLETED' }, archived: false },
+        });
+
+        const pendingInvoices = await prisma.invoice.aggregate({
+            where: { userId, status: 'UNPAID' },
+            _sum: { amount: true, tax: true },
+        });
+
+        const revenueThisYear = await prisma.invoice.aggregate({
+            where: {
+                userId,
+                createdAt: { gte: startOfYear },
+                status: 'PAID',
+            },
+            _sum: { amount: true, tax: true },
+        });
+
         res.json({
             todayTasks,
             upcomingMeetings,
             studioBookings,
+            activeProjectsCount,
             revenueThisMonth: (revenueThisMonth._sum.amount || 0) + (revenueThisMonth._sum.tax || 0),
+            revenueThisYear: (revenueThisYear._sum.amount || 0) + (revenueThisYear._sum.tax || 0),
+            pendingRevenue: (pendingInvoices._sum.amount || 0) + (pendingInvoices._sum.tax || 0),
             taskCompletionRate,
             weeklyRevenue,
         });

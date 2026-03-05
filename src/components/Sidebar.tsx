@@ -25,15 +25,17 @@ export const Sidebar = () => {
     if (['/login', '/register'].includes(pathname)) return null;
 
     return (
-        <aside className="h-full w-64 bg-slate-900 border-r border-slate-800 flex flex-col p-6 space-y-8">
+        <aside className="h-full w-64 glass-panel border-r border-slate-800/50 flex flex-col p-6 space-y-8">
             <div className="flex items-center gap-3 px-2">
-                <Video className="text-blue-500" size={32} />
-                <h2 className="text-xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+                <div className="w-10 h-10 bg-accent-gradient rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                    <Video className="text-white" size={24} />
+                </div>
+                <h2 className="text-xl font-bold text-gradient">
                     EditPro
                 </h2>
             </div>
 
-            <nav className="flex-1 space-y-2">
+            <nav className="flex-1 space-y-1.5">
                 {navItems.map((item) => {
                     const isActive = pathname === item.href;
                     return (
@@ -41,26 +43,38 @@ export const Sidebar = () => {
                             key={item.href}
                             href={item.href}
                             className={cn(
-                                "flex items-center gap-3 p-3 rounded-xl transition-all group",
+                                "flex items-center gap-3 p-3 rounded-xl transition-all duration-200 group relative",
                                 isActive
-                                    ? "bg-blue-600 text-white shadow-lg shadow-blue-900/40"
-                                    : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                                    ? "bg-slate-800/60 text-white shadow-sm"
+                                    : "text-slate-400 hover:bg-slate-800/30 hover:text-white"
                             )}
                         >
-                            <item.icon size={20} className={cn(isActive ? "text-white" : "text-slate-500 group-hover:text-blue-400")} />
-                            <span className="font-semibold">{item.label}</span>
+                            {isActive && (
+                                <div className="absolute left-0 w-1 h-6 bg-accent-gradient rounded-full" />
+                            )}
+                            <item.icon
+                                size={18}
+                                className={cn(
+                                    isActive
+                                        ? "text-blue-400"
+                                        : "text-slate-500 group-hover:text-blue-400"
+                                )}
+                            />
+                            <span className="font-medium text-sm tracking-wide">{item.label}</span>
                         </Link>
                     );
                 })}
             </nav>
 
-            <button
-                onClick={logout}
-                className="flex items-center gap-3 p-3 rounded-xl text-slate-400 hover:bg-red-950/30 hover:text-red-400 transition-all"
-            >
-                <LogOut size={20} />
-                <span className="font-semibold">Sign Out</span>
-            </button>
+            <div className="pt-6 border-t border-slate-800/50">
+                <button
+                    onClick={logout}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl text-slate-500 hover:bg-red-950/20 hover:text-red-400 transition-all duration-200 group"
+                >
+                    <LogOut size={18} className="group-hover:scale-110 transition-transform" />
+                    <span className="font-medium text-sm">Sign Out</span>
+                </button>
+            </div>
         </aside>
     );
 };

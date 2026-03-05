@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
@@ -26,25 +26,80 @@ model User {
   tasks         Task[]
   timeLogs      TimeLog[]
   projects      Project[]       @relation("TeamMembers")
+  comments      Comment[]
+  activityLogs  Activity[]
 }
 
 model Project {
   id            String    @id @default(cuid())
   name          String
   description   String?
-  status        String    @default("PLANNING")
+  status        String    @default("PLANNING") // PLANNING, EDITING, REVIEW, REVISIONS, FINAL_EXPORT, DELIVERED
   budget        Float     @default(0)
   deadline      DateTime?
   revisionCount Int       @default(0)
+  clientName    String?
+  clientEmail   String?
+  clientNotes   String?
   archived      Boolean   @default(false)
   ownerId       String
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   files         File[]
   invoices      Invoice[]
+  milestones    Milestone[]
+  revisions     Revision[]
+  comments      Comment[]
+  activities    Activity[]
   owner         User      @relation("ProjectOwner", fields: [ownerId], references: [id])
   tasks         Task[]
   teamMembers   User[]    @relation("TeamMembers")
+}
+
+model Milestone {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  dueDate     DateTime?
+  status      String   @default("PENDING") // PENDING, COMPLETED
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Revision {
+  id          String   @id @default(cuid())
+  version     Int
+  description String?
+  fileUrl     String?
+  status      String   @default("PENDING") // PENDING, APPROVED, CHANGES_REQUESTED
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+  content     String
+  userId      String
+  projectId   String?
+  taskId      String?
+  user        User     @relation(fields: [userId], references: [id])
+  project     Project? @relation(fields: [projectId], references: [id])
+  task        Task?    @relation(fields: [taskId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model Activity {
+  id          String   @id @default(cuid())
+  action      String
+  details     String?
+  userId      String
+  projectId   String?
+  user        User     @relation(fields: [userId], references: [id])
+  project     Project? @relation(fields: [projectId], references: [id])
+  createdAt   DateTime @default(now())
 }
 
 model Task {
@@ -61,6 +116,7 @@ model Task {
   user        User      @relation(fields: [userId], references: [id])
   project     Project?  @relation(fields: [projectId], references: [id])
   timeLogs    TimeLog[]
+  comments    Comment[]
 }
 
 model Meeting {
@@ -105,14 +161,15 @@ model Invoice {
 }
 
 model TimeLog {
-  id          String   @id @default(cuid())
-  duration    Int
+  id          String    @id @default(cuid())
+  startTime   DateTime  @default(now())
+  endTime     DateTime?
   description String?
   taskId      String?
   userId      String
-  createdAt   DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id])
-  task        Task?    @relation(fields: [taskId], references: [id])
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id])
+  task        Task?     @relation(fields: [taskId], references: [id])
 }
 
 model Notification {

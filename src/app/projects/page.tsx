@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 interface Project {
     id: string;
@@ -22,6 +23,7 @@ interface Project {
 type ProjectStatus = 'PLANNING' | 'EDITING' | 'REVIEW' | 'DELIVERED';
 
 export default function ProjectsPage() {
+    const router = useRouter();
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -169,7 +171,8 @@ export default function ProjectsPage() {
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: idx * 0.05 }}
                         key={project.id}
-                        className="p-6 bg-slate-900 border border-slate-800 rounded-2xl hover:border-slate-600 transition-all hover:translate-y-[-2px] group relative"
+                        onClick={() => router.push(`/projects/${project.id}`)}
+                        className="p-6 bg-slate-900 border border-slate-800 rounded-2xl hover:border-blue-500/50 transition-all hover:translate-y-[-2px] group relative cursor-pointer hover:shadow-2xl hover:shadow-blue-500/10"
                     >
                         <div className="flex justify-between items-start mb-4">
                             <span className={cn("px-3 py-1 rounded-full text-[10px] font-bold", getStatusColor(project.status))}>
@@ -203,7 +206,7 @@ export default function ProjectsPage() {
                                             {(['PLANNING', 'EDITING', 'REVIEW', 'DELIVERED'] as ProjectStatus[]).map(s => (
                                                 <button
                                                     key={s}
-                                                    onClick={() => handleUpdateStatus(project.id, s)}
+                                                    onClick={(e) => { e.stopPropagation(); handleUpdateStatus(project.id, s); }}
                                                     className={cn(
                                                         "w-full flex items-center gap-2 px-4 py-2 text-xs transition-all",
                                                         project.status === s ? "bg-slate-700/50 text-blue-400 font-bold" : "text-slate-400 hover:bg-slate-700"

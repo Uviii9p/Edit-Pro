@@ -44,3 +44,25 @@ export const suggestReply = async (req: any, res: Response) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+export const suggestCreatives = async (req: any, res: Response) => {
+    const { projectBrief } = req.body;
+    const prompt = `Based on this project brief: "${projectBrief}", suggest 5 cinematic B-roll topics and 3 music styles (mood and genre) that would suit this video.`;
+    try {
+        const response = await callAI(req.user.id, prompt);
+        res.json({ response });
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const generateEmail = async (req: any, res: Response) => {
+    const { projectName, updates, status } = req.body;
+    const prompt = `Draft a professional studio update email for a project named "${projectName}". Status: ${status}. New updates: ${updates}. The tone should be high-end, professional, and reassuring.`;
+    try {
+        const response = await callAI(req.user.id, prompt);
+        res.json({ response });
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
+};
