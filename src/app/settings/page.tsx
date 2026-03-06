@@ -5,8 +5,9 @@ import { useAuthStore } from '@/store/useAuthStore';
 import api from '@/lib/api';
 import {
     User, Bell, Shield,
-    Settings, Save, CheckCircle,
-    Trash2, Mail, Lock, Camera
+    Save, CheckCircle,
+    Trash2, Mail, Lock, Camera,
+    Database, Download, Upload, Server, ShieldCheck, History
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -20,6 +21,21 @@ export default function SettingsPage() {
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [passwords, setPasswords] = useState({ old: '', new: '', confirm: '' });
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const backupInputRef = useRef<HTMLInputElement>(null);
+    const [totalRecords, setTotalRecords] = useState(0);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            let count = 0;
+            ['editpro_projects', 'editpro_tasks', 'editpro_invoices', 'editpro_clients'].forEach(k => {
+                try {
+                    const data = JSON.parse(localStorage.getItem(k) || '[]');
+                    count += data.length;
+                } catch { /* ignore */ }
+            });
+            setTotalRecords(count);
+        }
+    }, []);
 
     // Sync name if user profile loads after initial render
     useEffect(() => {
@@ -86,9 +102,9 @@ export default function SettingsPage() {
 
     const tabs = [
         { id: 'profile', label: 'Profile Settings', icon: User },
+        { id: 'storage', label: 'Data Vault', icon: Database },
         { id: 'notifications', label: 'Notifications', icon: Bell },
         { id: 'security', label: 'Account Security', icon: Shield },
-        { id: 'billing', label: 'Billing Plan', icon: Settings },
         { id: 'logout', label: 'Sign Out', icon: Trash2 },
     ];
 
@@ -144,6 +160,103 @@ export default function SettingsPage() {
 
                 {/* Content Area */}
                 <div className="flex-1 bg-slate-900 border border-slate-800 rounded-3xl p-4 md:p-8 shadow-xl">
+                    {activeTab === 'storage' && (
+                        <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-8">
+                            <div className="bg-blue-600/10 border border-blue-500/20 p-6 rounded-3xl flex items-start gap-4">
+                                <div className="p-3 bg-blue-600 rounded-2xl text-white">
+                                    <ShieldCheck size={24} />
+                                </div>
+                                <div className="space-y-1">
+                                    <h3 className="text-lg font-bold text-white">Device-Only Storage Mode</h3>
+                                    <p className="text-xs text-slate-400 leading-relaxed max-w-md">
+                                        Your EditPro Studio data is stored locally on this device. We don't keep copies in the cloud, ensuring 100% privacy for your client records and financial data.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="p-6 bg-slate-800 rounded-3xl border border-slate-700/50 space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <div className="space-y-1">
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Database Health</p>
+                                            <h4 className="text-xl font-bold">{totalRecords} Records</h4>
+                                        </div>
+                                        <Server className="text-blue-500" size={24} />
+                                    </div>
+                                    <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden">
+                                        <div className="h-full bg-blue-500 w-[85%]" />
+                                    </div>
+                                    <p className="text-[10px] text-slate-500">Local Storage: 92% Available</p>
+                                </div>
+
+                                <div className="p-6 bg-slate-800 rounded-3xl border border-slate-700/50 space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <div className="space-y-1">
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Last Backup</p>
+                                            <h4 className="text-xl font-bold">Never Exported</h4>
+                                        </div>
+                                        <History className="text-amber-500" size={24} />
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 leading-tight">Create a backup file to move your studio to another device.</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest pl-1">Maintenance Actions</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <button
+                                        onClick={() => (api as any).utils.exportAppData()}
+                                        className="flex items-center justify-between p-4 bg-slate-800 border border-slate-700 rounded-2xl hover:border-blue-500/50 transition-all group"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-lg group-hover:scale-110 transition-transform">
+                                                <Download size={20} />
+                                            </div>
+                                            <div className="text-left">
+                                                <p className="font-bold text-sm">Download Backup</p>
+                                                <p className="text-[10px] text-slate-500">Save complete state to .json</p>
+                                            </div>
+                                        </div>
+                                    </button>
+
+                                    <button
+                                        onClick={() => backupInputRef.current?.click()}
+                                        className="flex items-center justify-between p-4 bg-slate-800 border border-slate-700 rounded-2xl hover:border-blue-500/50 transition-all group"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-blue-500/10 text-blue-500 rounded-lg group-hover:scale-110 transition-transform">
+                                                <Upload size={20} />
+                                            </div>
+                                            <div className="text-left">
+                                                <p className="font-bold text-sm">Restore Data</p>
+                                                <p className="text-[10px] text-slate-500">Import from .json vault</p>
+                                            </div>
+                                        </div>
+                                        <input
+                                            type="file"
+                                            ref={backupInputRef}
+                                            className="hidden"
+                                            accept=".json"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    const reader = new FileReader();
+                                                    reader.onload = (ev) => {
+                                                        const content = ev.target?.result as string;
+                                                        if (confirm('WARNING: This will overwrite CURRENT studio data. Continue?')) {
+                                                            (api as any).utils.importAppData(content);
+                                                        }
+                                                    };
+                                                    reader.readAsText(file);
+                                                }
+                                            }}
+                                        />
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+
                     {activeTab === 'profile' && (
                         <motion.div
                             initial={{ opacity: 0, y: 10 }}
@@ -278,35 +391,6 @@ export default function SettingsPage() {
                         </motion.div>
                     )}
 
-                    {activeTab === 'billing' && (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-                            <h3 className="text-lg font-bold">Studio Billing Plan</h3>
-                            <div className="p-6 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl text-white">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div>
-                                        <p className="text-blue-100 text-sm font-bold uppercase tracking-widest">Current Plan</p>
-                                        <h2 className="text-3xl font-bold">Pro Creator</h2>
-                                    </div>
-                                    <span className="bg-white/20 px-3 py-1 rounded-full text-xs font-bold uppercase">Active</span>
-                                </div>
-                                <p className="text-blue-100 text-sm">₹2,499 / Month • Next billing on April 02, 2026</p>
-                            </div>
-                            <div className="space-y-4">
-                                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest pt-4">Plan Benefits</h4>
-                                <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    {['Unlimited Projects', 'AI Schedule Optimization', 'Priority Studio Booking', 'Custom Invoice Brading'].map(item => (
-                                        <li key={item} className="flex items-center gap-2 text-sm text-slate-300">
-                                            <CheckCircle size={16} className="text-emerald-400" />
-                                            {item}
-                                        </li>
-                                    ))}
-                                </ul>
-                                <button className="w-full py-4 border-2 border-slate-700 hover:border-slate-600 rounded-2xl font-bold text-slate-300 transition-all mt-4">
-                                    Upgrade to Enterprise
-                                </button>
-                            </div>
-                        </motion.div>
-                    )}
 
                     {activeTab === 'logout' && (
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-12 space-y-6">

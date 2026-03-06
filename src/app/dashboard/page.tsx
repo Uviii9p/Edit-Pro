@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import {
-    Briefcase, Clock,
+    Briefcase, Clock, AlertCircle,
     Calendar, IndianRupee, ArrowUpRight, TrendingUp
 } from 'lucide-react';
 import {
@@ -12,12 +12,14 @@ import {
 } from 'recharts';
 import { motion } from 'framer-motion';
 import { parseISO, isSameDay } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 
 export default function DashboardPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [chartMode, setChartMode] = useState<'WEEK' | 'MONTH'>('WEEK');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const user = useAuthStore((state: any) => state.user);
 
@@ -54,18 +56,22 @@ export default function DashboardPage() {
     const stats = [
         { label: "Active Projects", value: data?.activeProjectsCount || 0, icon: Briefcase, color: "text-blue-400" },
         { label: "Revenue (Month)", value: `₹${data?.revenueThisMonth?.toLocaleString() || 0}`, icon: IndianRupee, color: "text-emerald-400" },
-        { label: "Pending Invoices", value: `₹${data?.pendingRevenue?.toLocaleString() || 0}`, icon: Clock, color: "text-amber-400" },
-        { label: "Completion Rate", value: `${Math.round(data?.taskCompletionRate || 0)}%`, icon: TrendingUp, color: "text-purple-400" },
+        { label: "Pending Revenue", value: `₹${data?.pendingRevenue?.toLocaleString() || 0}`, icon: Clock, color: "text-amber-400" },
+        { label: "Overdue Amount", value: `₹${data?.totalOverdue?.toLocaleString() || 0}`, icon: AlertCircle, color: "text-red-400" },
     ];
 
+    const chartData = chartMode === 'WEEK'
+        ? (data?.weeklyRevenue || [])
+        : (data?.monthlyRevenue || []);
+
     return (
-        <div className="p-6 md:p-10 space-y-10">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div className="space-y-1">
-                    <h1 className="text-3xl font-bold text-gradient">Welcome, {user?.name?.split(' ')[0]}</h1>
-                    <p className="text-slate-400 font-medium">Your studio engine is running at peak performance.</p>
+        <div className="p-4 md:p-10 space-y-6 md:space-y-10">
+            <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mt-16 sm:mt-0">
+                <div className="space-y-1 w-full text-center sm:text-left">
+                    <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">Welcome, {user?.name?.split(' ')[0]}</h1>
+                    <p className="text-[10px] md:text-sm text-slate-500 font-bold tracking-tight uppercase tracking-widest opacity-80">Studio performance at peak potential.</p>
                 </div>
-                <div className="flex items-center gap-4 bg-slate-900/40 p-1.5 pl-4 rounded-2xl border border-slate-800/50 backdrop-blur-sm">
+                <div className="flex items-center gap-4 bg-slate-900/40 p-1.5 pl-4 rounded-2xl border border-slate-800/50 backdrop-blur-sm w-full sm:w-auto">
                     <div className="text-right">
                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Total Yearly Revenue</p>
                         <p className="font-bold text-emerald-400 tracking-tight">₹{data?.revenueThisYear?.toLocaleString() || 0}</p>
@@ -79,7 +85,7 @@ export default function DashboardPage() {
             </header>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 {stats.map((stat, idx) => (
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -106,63 +112,139 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Revenue Chart */}
-                <div className="lg:col-span-2 glass-panel p-8">
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <h3 className="text-xl font-bold text-white">Financial Growth</h3>
-                            <p className="text-sm text-slate-400">Weekly revenue performance tracking</p>
+                <div className="lg:col-span-2 glass-panel p-4 md:p-8">
+                    <div className="mb-6 space-y-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <h3 className="text-xl font-black text-white tracking-tight">Financial Growth</h3>
+                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                                    {chartMode === 'WEEK' ? 'Weekly revenue stream' : 'Monthly revenue stream'}
+                                </p>
+                            </div>
+                            <div className="flex gap-2 bg-slate-900/50 p-1 rounded-xl border border-slate-800 w-fit">
+                                <button
+                                    onClick={() => setChartMode('WEEK')}
+                                    className={cn("px-4 py-1.5 text-[10px] font-black rounded-lg transition-all",
+                                        chartMode === 'WEEK' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300')}
+                                >
+                                    WEEK
+                                </button>
+                                <button
+                                    onClick={() => setChartMode('MONTH')}
+                                    className={cn("px-4 py-1.5 text-[10px] font-black rounded-lg transition-all",
+                                        chartMode === 'MONTH' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300')}
+                                >
+                                    MONTH
+                                </button>
+                            </div>
                         </div>
-                        <div className="flex gap-2">
-                            <button className="px-3 py-1 text-xs font-bold rounded-lg bg-blue-600/10 text-blue-400 border border-blue-500/20">WEEK</button>
-                            <button className="px-3 py-1 text-xs font-bold rounded-lg hover:bg-slate-800 transition-colors">MONTH</button>
+
+                        {/* Responsive Legend */}
+                        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-2 border-t border-slate-800/50">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]" />
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Paid Revenue</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]" />
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Invoiced</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)]" />
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Overdue</span>
+                            </div>
                         </div>
                     </div>
 
                     <div className="h-[320px] w-full mt-4">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={data?.weeklyRevenue || []} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                            <AreaChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                                 <defs>
-                                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.25} />
+                                    <linearGradient id="colorPaid" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                                    </linearGradient>
+                                    <linearGradient id="colorInvoiced" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
                                         <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                    </linearGradient>
+                                    <linearGradient id="colorOverdue" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
+                                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
                                 <XAxis
                                     dataKey="name"
                                     stroke="#475569"
-                                    fontSize={12}
-                                    fontWeight={500}
+                                    fontSize={11}
+                                    fontWeight={700}
                                     axisLine={false}
                                     tickLine={false}
                                     dy={10}
                                 />
                                 <YAxis
                                     stroke="#475569"
-                                    fontSize={11}
-                                    fontWeight={600}
+                                    fontSize={10}
+                                    fontWeight={700}
                                     axisLine={false}
                                     tickLine={false}
-                                    tickFormatter={(v) => `₹${v / 1000}k`}
+                                    tickFormatter={(v) => v >= 1000 ? `₹${v / 1000}k` : `₹${v}`}
                                 />
                                 <Tooltip
                                     contentStyle={{
                                         backgroundColor: '#0f172a',
-                                        border: '1px solid rgba(255,255,255,0.05)',
+                                        border: '1px solid rgba(255,255,255,0.08)',
                                         borderRadius: '12px',
-                                        boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+                                        boxShadow: '0 10px 40px rgba(0,0,0,0.6)',
+                                        padding: '12px 16px',
                                     }}
+                                    labelStyle={{ color: '#94a3b8', fontSize: '11px', fontWeight: 700, marginBottom: '4px' }}
+                                    itemStyle={{ fontSize: '12px', fontWeight: 700 }}
                                     cursor={{ stroke: '#334155', strokeWidth: 1 }}
                                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                    formatter={(value: any) => [`₹${Number(value || 0).toLocaleString()}`, "Revenue"]}
+                                    formatter={(value: any, name?: string) => {
+                                        const labels: any = {
+                                            amount: 'Paid Revenue',
+                                            invoiced: 'Total Invoiced',
+                                            overdue: 'Overdue Amount'
+                                        };
+                                        return [`₹${Number(value || 0).toLocaleString()}`, labels[name!] || name];
+                                    }}
                                 />
                                 <Area
-                                    type="monotone"
-                                    dataKey="revenue"
+                                    type="linear"
+                                    dataKey="invoiced"
                                     stroke="#3b82f6"
-                                    fillOpacity={1}
-                                    fill="url(#colorRevenue)"
-                                    strokeWidth={4}
-                                    animationDuration={1500}
+                                    fillOpacity={0.4}
+                                    fill="url(#colorInvoiced)"
+                                    strokeWidth={2}
+                                    strokeDasharray="5 5"
+                                    animationDuration={1000}
+                                    connectNulls
+                                    dot={false}
+                                />
+                                <Area
+                                    type="linear"
+                                    dataKey="overdue"
+                                    stroke="#ef4444"
+                                    fillOpacity={0.3}
+                                    fill="url(#colorOverdue)"
+                                    strokeWidth={2}
+                                    animationDuration={1000}
+                                    connectNulls
+                                    dot={false}
+                                />
+                                <Area
+                                    type="linear"
+                                    dataKey="amount"
+                                    stroke="#10b981"
+                                    fillOpacity={0.5}
+                                    fill="url(#colorPaid)"
+                                    strokeWidth={3}
+                                    animationDuration={1000}
+                                    connectNulls
+                                    dot={{ r: 4, fill: '#10b981', strokeWidth: 2, stroke: '#0f172a' }}
+                                    activeDot={{ r: 6, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }}
                                 />
                             </AreaChart>
                         </ResponsiveContainer>

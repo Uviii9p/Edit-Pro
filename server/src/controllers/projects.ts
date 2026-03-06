@@ -2,10 +2,10 @@ import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 
 export const createProject = async (req: any, res: Response) => {
-    const { name, description, budget, deadline, clientName, clientEmail, clientNotes } = req.body;
+    const { name, description, budget, deadline, clientName, clientEmail, clientAddress, clientPhone, clientNotes } = req.body;
 
     try {
-        const project = await prisma.project.create({
+        const project = await (prisma.project as any).create({
             data: {
                 name,
                 description,
@@ -13,6 +13,8 @@ export const createProject = async (req: any, res: Response) => {
                 deadline: deadline ? new Date(deadline) : null,
                 clientName,
                 clientEmail,
+                clientAddress,
+                clientPhone,
                 clientNotes,
                 ownerId: req.user.id,
             },
@@ -75,10 +77,10 @@ export const getProjectById = async (req: any, res: Response) => {
 
 export const updateProject = async (req: any, res: Response) => {
     const { id } = req.params;
-    const { name, description, budget, deadline, status, archived, clientName, clientEmail, clientNotes } = req.body;
+    const { name, description, budget, deadline, status, archived, clientName, clientEmail, clientAddress, clientPhone, clientNotes } = req.body;
 
     try {
-        const project = await prisma.project.update({
+        const project = await (prisma.project as any).update({
             where: { id: id as string },
             data: {
                 name,
@@ -89,6 +91,8 @@ export const updateProject = async (req: any, res: Response) => {
                 archived,
                 clientName,
                 clientEmail,
+                clientAddress,
+                clientPhone,
                 clientNotes
             },
         });

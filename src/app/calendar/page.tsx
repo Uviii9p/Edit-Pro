@@ -511,30 +511,6 @@ export default function CalendarPage() {
                                 )}
                             </div>
                         </section>
-
-                        <section>
-                            <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                                <AlertCircle size={14} className="text-red-400" /> High Priority
-                            </h3>
-                            <div className="space-y-3">
-                                {events.filter(e => e.priority === 'HIGH' && e.status !== 'COMPLETED').slice(0, 4).map(event => (
-                                    <div key={event.id} className="flex items-center gap-3 p-2 group cursor-pointer">
-                                        <div className="w-1.5 h-10 bg-red-500 rounded-full shadow-[0_0_10px_rgba(239,68,68,0.3)] transition-all group-hover:h-12" />
-                                        <div>
-                                            <h4 className="text-sm font-bold text-slate-300">{event.title}</h4>
-                                            <p className="text-[10px] text-red-400/80 font-bold uppercase tracking-tighter">{format(parseISO(event.date), 'MMM d')}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-
-                        <div className="p-6 bg-gradient-to-br from-indigo-600 to-blue-700 rounded-3xl relative overflow-hidden group shadow-xl shadow-indigo-900/20">
-                            <Zap size={64} className="absolute -right-4 -bottom-4 text-white/10 rotate-12 transition-transform group-hover:rotate-0" />
-                            <h4 className="text-lg font-black text-white leading-tight">Pro Studio<br />Management</h4>
-                            <p className="text-[10px] font-bold text-indigo-100 uppercase tracking-widest mt-2 opacity-80">Local First • Realtime</p>
-                            <button className="mt-6 w-full py-2 bg-white text-indigo-600 rounded-xl font-bold text-xs shadow-lg transition-all hover:bg-slate-100 transform active:scale-95">Upgrade Workflow</button>
-                        </div>
                     </div>
                 </aside>
             </div>

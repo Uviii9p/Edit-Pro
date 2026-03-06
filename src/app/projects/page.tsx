@@ -18,6 +18,11 @@ interface Project {
     budget: number;
     deadline: string;
     revisionCount: number;
+    clientName?: string;
+    clientEmail?: string;
+    clientAddress?: string;
+    clientPhone?: string;
+    clientNotes?: string;
 }
 
 type ProjectStatus = 'PLANNING' | 'EDITING' | 'REVIEW' | 'DELIVERED';
@@ -28,7 +33,16 @@ export default function ProjectsPage() {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProject, setEditingProject] = useState<Project | null>(null);
-    const [newProject, setNewProject] = useState({ name: '', description: '', budget: 0, deadline: '' });
+    const [newProject, setNewProject] = useState({
+        name: '',
+        description: '',
+        budget: 0,
+        deadline: '',
+        clientName: '',
+        clientEmail: '',
+        clientAddress: '',
+        clientPhone: ''
+    });
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -59,7 +73,10 @@ export default function ProjectsPage() {
         try {
             await api.post('/projects', newProject);
             setIsModalOpen(false);
-            setNewProject({ name: '', description: '', budget: 0, deadline: '' });
+            setNewProject({
+                name: '', description: '', budget: 0, deadline: '',
+                clientName: '', clientEmail: '', clientAddress: '', clientPhone: ''
+            });
             fetchProjects();
         } catch (err) {
             console.error(err);
@@ -76,6 +93,10 @@ export default function ProjectsPage() {
                 budget: editingProject.budget,
                 deadline: editingProject.deadline,
                 status: editingProject.status,
+                clientName: editingProject.clientName,
+                clientEmail: editingProject.clientEmail,
+                clientAddress: editingProject.clientAddress,
+                clientPhone: editingProject.clientPhone,
             });
             setEditingProject(null);
             fetchProjects();
@@ -291,8 +312,39 @@ export default function ProjectsPage() {
                                         placeholder="Outline the core scope and goals..."
                                         value={newProject.description || ''}
                                         onChange={e => setNewProject({ ...newProject, description: e.target.value })}
-                                        className="w-full bg-slate-800 p-4 rounded-2xl outline-none ring-1 ring-slate-700 focus:ring-2 focus:ring-blue-500 h-28 transition-all resize-none"
+                                        className="w-full bg-slate-800 p-4 rounded-2xl outline-none ring-1 ring-slate-700 focus:ring-2 focus:ring-blue-500 h-24 transition-all resize-none"
                                     />
+                                </div>
+                                <div className="p-4 bg-slate-950/50 rounded-2xl border border-slate-800 space-y-4">
+                                    <label className="text-xs font-bold text-blue-500 uppercase tracking-widest pl-1 flex items-center gap-2">
+                                        👤 Client Information
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <input
+                                            placeholder="Client Name"
+                                            value={newProject.clientName || ''}
+                                            onChange={e => setNewProject({ ...newProject, clientName: e.target.value })}
+                                            className="w-full bg-slate-800 p-3 rounded-xl outline-none ring-1 ring-slate-700 focus:ring-1 focus:ring-blue-500 text-sm"
+                                        />
+                                        <input
+                                            placeholder="Client Email"
+                                            value={newProject.clientEmail || ''}
+                                            onChange={e => setNewProject({ ...newProject, clientEmail: e.target.value })}
+                                            className="w-full bg-slate-800 p-3 rounded-xl outline-none ring-1 ring-slate-700 focus:ring-1 focus:ring-blue-500 text-sm"
+                                        />
+                                        <input
+                                            placeholder="Client Address"
+                                            value={newProject.clientAddress || ''}
+                                            onChange={e => setNewProject({ ...newProject, clientAddress: e.target.value })}
+                                            className="w-full bg-slate-800 p-3 rounded-xl outline-none ring-1 ring-slate-700 focus:ring-1 focus:ring-blue-500 text-sm col-span-2"
+                                        />
+                                        <input
+                                            placeholder="Client Phone"
+                                            value={newProject.clientPhone || ''}
+                                            onChange={e => setNewProject({ ...newProject, clientPhone: e.target.value })}
+                                            className="w-full bg-slate-800 p-3 rounded-xl outline-none ring-1 ring-slate-700 focus:ring-1 focus:ring-blue-500 text-sm col-span-2"
+                                        />
+                                    </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
@@ -364,8 +416,39 @@ export default function ProjectsPage() {
                                     <textarea
                                         value={editingProject.description}
                                         onChange={e => setEditingProject({ ...editingProject, description: e.target.value })}
-                                        className="w-full bg-slate-800 p-4 rounded-2xl outline-none ring-1 ring-slate-700 focus:ring-2 focus:ring-blue-500 h-28 transition-all resize-none"
+                                        className="w-full bg-slate-800 p-4 rounded-2xl outline-none ring-1 ring-slate-700 focus:ring-2 focus:ring-blue-500 h-24 transition-all resize-none"
                                     />
+                                </div>
+                                <div className="p-4 bg-slate-950/50 rounded-2xl border border-slate-800 space-y-4">
+                                    <label className="text-xs font-bold text-emerald-500 uppercase tracking-widest pl-1 flex items-center gap-2">
+                                        👤 Client Information
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <input
+                                            placeholder="Client Name"
+                                            value={editingProject.clientName || ''}
+                                            onChange={e => setEditingProject({ ...editingProject, clientName: e.target.value })}
+                                            className="w-full bg-slate-800 p-3 rounded-xl outline-none ring-1 ring-slate-700 focus:ring-1 focus:ring-emerald-500 text-sm"
+                                        />
+                                        <input
+                                            placeholder="Client Email"
+                                            value={editingProject.clientEmail || ''}
+                                            onChange={e => setEditingProject({ ...editingProject, clientEmail: e.target.value })}
+                                            className="w-full bg-slate-800 p-3 rounded-xl outline-none ring-1 ring-slate-700 focus:ring-1 focus:ring-emerald-500 text-sm"
+                                        />
+                                        <input
+                                            placeholder="Client Address"
+                                            value={editingProject.clientAddress || ''}
+                                            onChange={e => setEditingProject({ ...editingProject, clientAddress: e.target.value })}
+                                            className="w-full bg-slate-800 p-3 rounded-xl outline-none ring-1 ring-slate-700 focus:ring-1 focus:ring-emerald-500 text-sm col-span-2"
+                                        />
+                                        <input
+                                            placeholder="Client Phone"
+                                            value={editingProject.clientPhone || ''}
+                                            onChange={e => setEditingProject({ ...editingProject, clientPhone: e.target.value })}
+                                            className="w-full bg-slate-800 p-3 rounded-xl outline-none ring-1 ring-slate-700 focus:ring-1 focus:ring-emerald-500 text-sm col-span-2"
+                                        />
+                                    </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
