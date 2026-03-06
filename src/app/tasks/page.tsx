@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 type Priority = 'LOW' | 'MEDIUM' | 'HIGH';
 type Status = 'TODO' | 'IN_PROGRESS' | 'COMPLETED';
@@ -36,8 +37,10 @@ export default function TasksPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedMobileCol, setExpandedMobileCol] = useState<Status | null>(null);
     const [moveMenuTask, setMoveMenuTask] = useState<string | null>(null);
+    const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
+        setIsClient(true);
         fetchTasks();
         fetchProjects();
     }, []);
@@ -59,6 +62,20 @@ export default function TasksPage() {
     const handleCreateTask = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            // Optimistic Update
+            const tempId = `temp-${Date.now()}`;
+            const optimisticTask: Task = {
+                id: tempId,
+                title: newTask.title,
+                description: newTask.description,
+                priority: newTask.priority,
+                status: 'TODO',
+                deadline: newTask.deadline,
+                projectId: newTask.projectId,
+                project: projects.find(p => p.id === newTask.projectId)
+            };
+            setTasks(prev => [optimisticTask, ...prev]);
+
             await api.post('/tasks', newTask);
             setIsModalOpen(false);
             setNewTask({ title: '', description: '', priority: 'MEDIUM', projectId: '', deadline: '' });
@@ -100,37 +117,31 @@ export default function TasksPage() {
         } catch (err) { console.error(err); }
     };
 
-    // Drag handlers (desktop only)
-    const handleDragStart = (e: React.DragEvent, task: Task) => {
-        setDraggedTask(task);
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', task.id);
-        const el = e.currentTarget as HTMLElement;
-        setTimeout(() => { if (el) el.style.opacity = '0.4'; }, 0);
-    };
-    const handleDragEnd = (e: React.DragEvent) => {
-        (e.currentTarget as HTMLElement).style.opacity = '1';
-        setDraggedTask(null);
-        setDragOverColumn(null);
-    };
-    const handleDragOver = (e: React.DragEvent, status: Status) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        setDragOverColumn(status);
-    };
-    const handleDragLeave = (e: React.DragEvent) => {
-        const related = e.relatedTarget as HTMLElement;
-        if (!e.currentTarget.contains(related)) setDragOverColumn(null);
-    };
-    const handleDrop = async (e: React.DragEvent, targetStatus: Status) => {
-        e.preventDefault();
-        setDragOverColumn(null);
-        if (!draggedTask || draggedTask.status === targetStatus) { setDraggedTask(null); return; }
-        const taskId = draggedTask.id;
-        setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: targetStatus } : t));
-        setDraggedTask(null);
-        try { await api.put(`/tasks/${taskId}`, { status: targetStatus }); }
-        catch { fetchTasks(); }
+    const onDragEnd = async (result: DropResult) => {
+        const { destination, source, draggableId } = result;
+
+        if (!destination) return;
+        if (destination.droppableId === source.droppableId && destination.index === source.index) return;
+
+        const targetStatus = destination.droppableId as Status;
+
+        // Optimistic UI update
+        const taskToMove = tasks.find(t => t.id === draggableId);
+        if (!taskToMove) return;
+
+        setTasks(prevTasks => {
+            const updatedTasks = prevTasks.map(t =>
+                t.id === draggableId ? { ...t, status: targetStatus } : t
+            );
+            return updatedTasks;
+        });
+
+        try {
+            await api.put(`/tasks/${draggableId}`, { status: targetStatus });
+        } catch (err) {
+            console.error('Failed to update task status:', err);
+            fetchTasks(); // Revert on failure
+        }
     };
 
     const columns: { title: string; status: Status; dotColor: string; borderHighlight: string }[] = [
@@ -167,64 +178,68 @@ export default function TasksPage() {
     );
 
     // Shared task card renderer
-    const renderTaskCard = (task: Task, isMobile: boolean) => (
-        <div
-            key={task.id}
-            draggable={!isMobile}
-            onDragStart={!isMobile ? (e => handleDragStart(e, task)) : undefined}
-            onDragEnd={!isMobile ? handleDragEnd : undefined}
-            className={cn(
-                "p-4 bg-slate-900 rounded-xl border border-slate-800 hover:border-slate-700 transition-all shadow-lg group",
-                !isMobile && "cursor-grab active:cursor-grabbing",
-                draggedTask?.id === task.id && "ring-2 ring-blue-500/50"
+    const renderTaskCard = (task: Task, isMobile: boolean, index: number) => (
+        <Draggable draggableId={task.id} index={index} key={task.id} isDragDisabled={isMobile}>
+            {(provided, snapshot) => (
+                <div
+                    ref={provided.innerRef}
+                    {...provided.draggableProps}
+                    {...provided.dragHandleProps}
+                    className={cn(
+                        "p-4 bg-slate-900 rounded-xl border border-slate-800 hover:border-slate-700 transition-all shadow-lg group",
+                        !isMobile && "cursor-grab active:cursor-grabbing",
+                        snapshot.isDragging && "ring-2 ring-blue-500/50 shadow-2xl opacity-90 scale-[1.02]"
+                    )}
+                    style={{ ...provided.draggableProps.style }}
+                >
+                    <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-center gap-2">
+                            {!isMobile && <GripVertical size={14} className="text-slate-600 group-hover:text-slate-400 transition-colors flex-shrink-0" />}
+                            <span className={cn("px-2 py-0.5 rounded text-[10px] font-bold uppercase", getPriorityColor(task.priority))}>
+                                {task.priority}
+                            </span>
+                        </div>
+                        <div className={cn("flex gap-1", isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100 transition-opacity")}>
+                            <button onClick={() => setEditingTask(task)} className="p-1.5 hover:text-blue-400 text-slate-500 transition-colors cursor-pointer z-10" title="Edit">
+                                <Edit2 size={14} />
+                            </button>
+                            <button onClick={() => deleteTask(task.id)} className="p-1.5 hover:text-red-400 text-slate-500 transition-colors cursor-pointer z-10" title="Delete">
+                                <Trash2 size={14} />
+                            </button>
+                        </div>
+                    </div>
+                    <h4 className={cn("font-bold text-slate-100 text-sm", !isMobile && "ml-6")}>{task.title}</h4>
+                    {task.description && <p className={cn("text-xs text-slate-500 mt-1 line-clamp-2", !isMobile && "ml-6")}>{task.description}</p>}
+                    <div className={cn("mt-3 flex items-center justify-between text-[10px] text-slate-500", !isMobile && "ml-6")}>
+                        <div className="flex items-center gap-1">
+                            <Clock size={11} />
+                            <span>{task.deadline ? new Date(task.deadline).toLocaleDateString() : 'No deadline'}</span>
+                        </div>
+                        {task.project && (
+                            <span className="bg-slate-800 px-2 py-0.5 rounded text-[10px] font-medium text-slate-400 truncate max-w-[100px]">{task.project.name}</span>
+                        )}
+                    </div>
+                    {/* Mobile: Move to next status button */}
+                    {isMobile && (
+                        <div className="mt-3 pt-3 border-t border-slate-800 flex gap-2">
+                            {(['TODO', 'IN_PROGRESS', 'COMPLETED'] as Status[]).filter(s => s !== task.status).map(s => (
+                                <button
+                                    key={s}
+                                    onClick={() => updateTaskStatus(task.id, s)}
+                                    className={cn("flex-1 text-[10px] font-bold py-1.5 rounded-lg transition-all",
+                                        s === 'COMPLETED' ? "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20" :
+                                            s === 'IN_PROGRESS' ? "bg-blue-500/10 text-blue-400 hover:bg-blue-500/20" :
+                                                "bg-slate-800 text-slate-400 hover:bg-slate-700"
+                                    )}
+                                >
+                                    → {getStatusLabel(s)}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
             )}
-        >
-            <div className="flex justify-between items-start mb-2">
-                <div className="flex items-center gap-2">
-                    {!isMobile && <GripVertical size={14} className="text-slate-600 group-hover:text-slate-400 transition-colors flex-shrink-0" />}
-                    <span className={cn("px-2 py-0.5 rounded text-[10px] font-bold uppercase", getPriorityColor(task.priority))}>
-                        {task.priority}
-                    </span>
-                </div>
-                <div className={cn("flex gap-1", isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100 transition-opacity")}>
-                    <button onClick={() => setEditingTask(task)} className="p-1.5 hover:text-blue-400 text-slate-500 transition-colors" title="Edit">
-                        <Edit2 size={14} />
-                    </button>
-                    <button onClick={() => deleteTask(task.id)} className="p-1.5 hover:text-red-400 text-slate-500 transition-colors" title="Delete">
-                        <Trash2 size={14} />
-                    </button>
-                </div>
-            </div>
-            <h4 className={cn("font-bold text-slate-100 text-sm", !isMobile && "ml-6")}>{task.title}</h4>
-            {task.description && <p className={cn("text-xs text-slate-500 mt-1 line-clamp-2", !isMobile && "ml-6")}>{task.description}</p>}
-            <div className={cn("mt-3 flex items-center justify-between text-[10px] text-slate-500", !isMobile && "ml-6")}>
-                <div className="flex items-center gap-1">
-                    <Clock size={11} />
-                    <span>{task.deadline ? new Date(task.deadline).toLocaleDateString() : 'No deadline'}</span>
-                </div>
-                {task.project && (
-                    <span className="bg-slate-800 px-2 py-0.5 rounded text-[10px] font-medium text-slate-400 truncate max-w-[100px]">{task.project.name}</span>
-                )}
-            </div>
-            {/* Mobile: Move to next status button */}
-            {isMobile && (
-                <div className="mt-3 pt-3 border-t border-slate-800 flex gap-2">
-                    {(['TODO', 'IN_PROGRESS', 'COMPLETED'] as Status[]).filter(s => s !== task.status).map(s => (
-                        <button
-                            key={s}
-                            onClick={() => updateTaskStatus(task.id, s)}
-                            className={cn("flex-1 text-[10px] font-bold py-1.5 rounded-lg transition-all",
-                                s === 'COMPLETED' ? "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20" :
-                                    s === 'IN_PROGRESS' ? "bg-blue-500/10 text-blue-400 hover:bg-blue-500/20" :
-                                        "bg-slate-800 text-slate-400 hover:bg-slate-700"
-                            )}
-                        >
-                            → {getStatusLabel(s)}
-                        </button>
-                    ))}
-                </div>
-            )}
-        </div>
+        </Draggable>
     );
 
     return (
@@ -270,86 +285,100 @@ export default function TasksPage() {
             {view === 'board' ? (
                 <>
                     {/* DESKTOP BOARD - hidden on mobile */}
-                    <div className="hidden md:grid md:grid-cols-3 gap-6 min-h-[calc(100vh-280px)]">
-                        {columns.map(col => {
-                            const columnTasks = filteredTasks.filter(t => t.status === col.status);
-                            const isOver = dragOverColumn === col.status;
-                            return (
-                                <div
-                                    key={col.status}
-                                    className="flex flex-col gap-4"
-                                    onDragOver={e => handleDragOver(e, col.status)}
-                                    onDragLeave={handleDragLeave}
-                                    onDrop={e => handleDrop(e, col.status)}
-                                >
-                                    <div className="flex items-center justify-between px-1">
-                                        <div className="flex items-center gap-2.5">
-                                            <div className={cn("w-2.5 h-2.5 rounded-full", col.dotColor)} />
-                                            <h3 className="font-bold text-slate-300 uppercase tracking-widest text-xs">{col.title}</h3>
+                    {isClient && (
+                        <DragDropContext onDragEnd={onDragEnd}>
+                            <div className="hidden md:grid md:grid-cols-3 gap-6 min-h-[calc(100vh-280px)]">
+                                {columns.map(col => {
+                                    const columnTasks = filteredTasks.filter(t => t.status === col.status);
+                                    return (
+                                        <div key={col.status} className="flex flex-col gap-4">
+                                            <div className="flex items-center justify-between px-1">
+                                                <div className="flex items-center gap-2.5">
+                                                    <div className={cn("w-2.5 h-2.5 rounded-full", col.dotColor)} />
+                                                    <h3 className="font-bold text-slate-300 uppercase tracking-widest text-xs">{col.title}</h3>
+                                                </div>
+                                                <span className="bg-slate-800 px-2.5 py-0.5 rounded-lg text-xs font-bold text-slate-500">{columnTasks.length}</span>
+                                            </div>
+                                            <Droppable droppableId={col.status}>
+                                                {(provided, snapshot) => (
+                                                    <div
+                                                        ref={provided.innerRef}
+                                                        {...provided.droppableProps}
+                                                        className={cn(
+                                                            "flex-1 p-3 rounded-2xl border-2 border-dashed space-y-3 overflow-y-auto transition-all duration-200 min-h-[200px]",
+                                                            snapshot.isDraggingOver ? col.borderHighlight : "border-slate-800/60",
+                                                            "bg-slate-900/30"
+                                                        )}>
+                                                        {columnTasks.map((task, index) => renderTaskCard(task, false, index))}
+                                                        {provided.placeholder}
+                                                        {columnTasks.length === 0 && !snapshot.isDraggingOver && (
+                                                            <div className="flex flex-col items-center justify-center py-12 text-slate-600 pointer-events-none">
+                                                                <CheckCircle2 size={32} className="mb-2 opacity-30" />
+                                                                <p className="text-xs font-medium">No tasks here</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </Droppable>
                                         </div>
-                                        <span className="bg-slate-800 px-2.5 py-0.5 rounded-lg text-xs font-bold text-slate-500">{columnTasks.length}</span>
-                                    </div>
-                                    <div className={cn(
-                                        "flex-1 p-3 rounded-2xl border-2 border-dashed space-y-3 overflow-y-auto transition-all duration-200 min-h-[200px]",
-                                        isOver ? col.borderHighlight : "border-slate-800/60"
-                                    )}>
-                                        {isOver && draggedTask && (
-                                            <div className="p-3 border-2 border-dashed border-blue-500/40 rounded-xl bg-blue-500/5 text-center text-xs text-blue-400 font-bold animate-pulse">
-                                                Drop here to move to {col.title}
-                                            </div>
-                                        )}
-                                        {columnTasks.map(task => renderTaskCard(task, false))}
-                                        {columnTasks.length === 0 && !isOver && (
-                                            <div className="flex flex-col items-center justify-center py-12 text-slate-600">
-                                                <CheckCircle2 size={32} className="mb-2 opacity-30" />
-                                                <p className="text-xs font-medium">No tasks here</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                                    );
+                                })}
+                            </div>
+                        </DragDropContext>
+                    )}
 
                     {/* MOBILE BOARD - collapsible columns */}
-                    <div className="md:hidden space-y-3">
-                        {columns.map(col => {
-                            const columnTasks = filteredTasks.filter(t => t.status === col.status);
-                            const isExpanded = expandedMobileCol === col.status || expandedMobileCol === null;
-                            return (
-                                <div key={col.status} className="bg-slate-900/50 rounded-2xl border border-slate-800 overflow-hidden">
-                                    <button
-                                        onClick={() => setExpandedMobileCol(expandedMobileCol === col.status ? null : col.status)}
-                                        className="w-full flex items-center justify-between p-4"
-                                    >
-                                        <div className="flex items-center gap-2.5">
-                                            <div className={cn("w-2.5 h-2.5 rounded-full", col.dotColor)} />
-                                            <h3 className="font-bold text-slate-300 text-sm">{col.title}</h3>
-                                            <span className="bg-slate-800 px-2 py-0.5 rounded text-[10px] font-bold text-slate-500">{columnTasks.length}</span>
-                                        </div>
-                                        <ChevronRight size={18} className={cn("text-slate-500 transition-transform", isExpanded && "rotate-90")} />
-                                    </button>
-                                    <AnimatePresence>
-                                        {isExpanded && (
-                                            <motion.div
-                                                initial={{ height: 0, opacity: 0 }}
-                                                animate={{ height: 'auto', opacity: 1 }}
-                                                exit={{ height: 0, opacity: 0 }}
-                                                className="overflow-hidden"
+                    {isClient && (
+                        <DragDropContext onDragEnd={onDragEnd}>
+                            <div className="md:hidden space-y-3">
+                                {columns.map(col => {
+                                    const columnTasks = filteredTasks.filter(t => t.status === col.status);
+                                    const isExpanded = expandedMobileCol === col.status || expandedMobileCol === null;
+                                    return (
+                                        <div key={col.status} className="bg-slate-900/50 rounded-2xl border border-slate-800 overflow-hidden">
+                                            <button
+                                                onClick={() => setExpandedMobileCol(expandedMobileCol === col.status ? null : col.status)}
+                                                className="w-full flex items-center justify-between p-4"
                                             >
-                                                <div className="p-3 pt-0 space-y-3">
-                                                    {columnTasks.map(task => renderTaskCard(task, true))}
-                                                    {columnTasks.length === 0 && (
-                                                        <div className="text-center py-6 text-slate-600 text-xs">No tasks</div>
-                                                    )}
+                                                <div className="flex items-center gap-2.5">
+                                                    <div className={cn("w-2.5 h-2.5 rounded-full", col.dotColor)} />
+                                                    <h3 className="font-bold text-slate-300 text-sm">{col.title}</h3>
+                                                    <span className="bg-slate-800 px-2 py-0.5 rounded text-[10px] font-bold text-slate-500">{columnTasks.length}</span>
                                                 </div>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                </div>
-                            );
-                        })}
-                    </div>
+                                                <ChevronRight size={18} className={cn("text-slate-500 transition-transform", isExpanded && "rotate-90")} />
+                                            </button>
+                                            <AnimatePresence>
+                                                {isExpanded && (
+                                                    <motion.div
+                                                        initial={{ height: 0, opacity: 0 }}
+                                                        animate={{ height: 'auto', opacity: 1 }}
+                                                        exit={{ height: 0, opacity: 0 }}
+                                                        className="overflow-hidden"
+                                                    >
+                                                        <Droppable droppableId={col.status}>
+                                                            {(provided) => (
+                                                                <div
+                                                                    ref={provided.innerRef}
+                                                                    {...provided.droppableProps}
+                                                                    className="p-3 pt-0 space-y-3"
+                                                                >
+                                                                    {columnTasks.map((task, index) => renderTaskCard(task, true, index))}
+                                                                    {provided.placeholder}
+                                                                    {columnTasks.length === 0 && (
+                                                                        <div className="text-center py-6 text-slate-600 text-xs">No tasks</div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </Droppable>
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </DragDropContext>
+                    )}
                 </>
             ) : (
                 /* LIST VIEW */
@@ -402,10 +431,19 @@ export default function TasksPage() {
 
                     {/* Mobile list cards */}
                     <div className="md:hidden space-y-3">
-                        {filteredTasks.map(task => renderTaskCard(task, true))}
-                        {filteredTasks.length === 0 && (
-                            <div className="text-center py-12 text-slate-600 text-sm">No tasks found</div>
-                        )}
+                        <DragDropContext onDragEnd={onDragEnd}>
+                            <Droppable droppableId="list">
+                                {(provided) => (
+                                    <div ref={provided.innerRef} {...provided.droppableProps}>
+                                        {filteredTasks.map((task, index) => renderTaskCard(task, true, index))}
+                                        {provided.placeholder}
+                                        {filteredTasks.length === 0 && (
+                                            <div className="text-center py-12 text-slate-600 text-sm">No tasks found</div>
+                                        )}
+                                    </div>
+                                )}
+                            </Droppable>
+                        </DragDropContext>
                     </div>
                 </div>
             )}

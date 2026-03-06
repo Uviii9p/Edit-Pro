@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import api from '@/lib/api';
 import {
     Calendar as CalendarIcon,
@@ -12,28 +12,18 @@ import {
     Users,
     MapPin,
     AlertCircle,
-    CheckCircle2,
-    Search,
-    Filter,
-    MoreVertical,
-    Download,
-    Printer,
     Edit2,
     Trash2,
     X,
-    LayoutGrid,
-    LayoutList,
-    Activity,
-    TrendingUp,
-    Trello,
     Zap,
     Star,
     Monitor,
-    Coffee
+    Coffee,
+    Activity
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addDays, getDay, parseISO, isWithinInterval, startOfDay, endOfDay, addHours, differenceInMinutes } from 'date-fns';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addDays, parseISO, startOfDay, addHours } from 'date-fns';
 
 type EventType = 'SHOOT' | 'EDIT' | 'MEETING' | 'GRADING' | 'DEADLINE' | 'RENDER' | 'OTHER';
 
@@ -63,7 +53,7 @@ interface StudioBooking {
     endTime: string; // ISO
 }
 
-const EVENT_TYPE_STYLES: Record<EventType, { color: string; bg: string; border: string; icon: any }> = {
+const EVENT_TYPE_STYLES: Record<EventType, { color: string; bg: string; border: string; icon: React.ElementType }> = {
     SHOOT: { color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20', icon: Video },
     EDIT: { color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20', icon: Monitor },
     MEETING: { color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', icon: Users },
@@ -78,13 +68,14 @@ export default function CalendarPage() {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [view, setView] = useState<'MONTH' | 'WEEK' | 'DAY'>('MONTH');
     const [events, setEvents] = useState<CalendarEvent[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [projects, setProjects] = useState<any[]>([]);
     const [isEventModalOpen, setIsEventModalOpen] = useState(false);
     const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [filterType, setFilterType] = useState<string>('ALL');
+    const [searchQuery] = useState('');
+    const [filterType] = useState<string>('ALL');
 
     // Form state
     const [formData, setFormData] = useState({
@@ -108,12 +99,7 @@ export default function CalendarPage() {
     });
 
     // Refs
-    const modalRef = useRef<HTMLDivElement>(null);
-
-    // Initial Fetch
-    useEffect(() => {
-        fetchData();
-    }, []);
+    // const modalRef = useRef<HTMLDivElement>(null);
 
     const fetchData = async () => {
         try {
@@ -127,6 +113,12 @@ export default function CalendarPage() {
             console.error('Failed to fetch calendar data', err);
         }
     };
+
+    // Initial Fetch
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        fetchData();
+    }, []);
 
     // Navigation
     const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
@@ -192,6 +184,7 @@ export default function CalendarPage() {
         }
     };
 
+    /*
     const filteredEvents = useMemo(() => {
         return events.filter(e => {
             const matchesSearch = e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -200,6 +193,7 @@ export default function CalendarPage() {
             return matchesSearch && matchesFilter;
         });
     }, [events, searchQuery, filterType]);
+    */
 
     // Studio Booking Logic
     const handleBooking = async (e: React.FormEvent) => {
@@ -497,7 +491,7 @@ export default function CalendarPage() {
                     <div className="space-y-8">
                         <section>
                             <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                                <Activity size={14} className="text-indigo-400" /> Today's Velocity
+                                <Activity size={14} className="text-indigo-400" /> Today&apos;s Velocity
                             </h3>
                             <div className="space-y-4">
                                 {getEventsForDay(new Date()).slice(0, 3).map(event => (

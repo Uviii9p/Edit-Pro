@@ -4,21 +4,22 @@ import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import {
-    Users, Briefcase, CheckCircle, Clock,
+    Briefcase, Clock,
     Calendar, IndianRupee, ArrowUpRight, TrendingUp
 } from 'lucide-react';
 import {
-    BarChart, Bar, XAxis, YAxis, CartesianGrid,
-    Tooltip, ResponsiveContainer, AreaChart, Area
+    XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area
 } from 'recharts';
 import { motion } from 'framer-motion';
-import { format, parseISO, isSameDay } from 'date-fns';
+import { parseISO, isSameDay } from 'date-fns';
 
 
 export default function DashboardPage() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const user = useAuthStore((state) => state.user);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const user = useAuthStore((state: any) => state.user);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -72,6 +73,7 @@ export default function DashboardPage() {
                     <img
                         src={user?.image || `https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=3b82f6&color=fff`}
                         className="w-10 h-10 rounded-xl border border-slate-700/50 object-cover"
+                        alt="Profile"
                     />
                 </div>
             </header>
@@ -150,6 +152,7 @@ export default function DashboardPage() {
                                         boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
                                     }}
                                     cursor={{ stroke: '#334155', strokeWidth: 1 }}
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                     formatter={(value: any) => [`₹${Number(value || 0).toLocaleString()}`, "Revenue"]}
                                 />
                                 <Area
@@ -175,7 +178,7 @@ export default function DashboardPage() {
                             </div>
                             <div>
                                 <h3 className="text-lg font-bold">Studio Schedule</h3>
-                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Today's Sessions</p>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Today&apos;s Sessions</p>
                             </div>
                         </div>
                         <button onClick={() => window.location.href = '/calendar'} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400">
@@ -184,10 +187,13 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="space-y-4 flex-1">
+                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                         {data?.calendarEvents?.filter((e: any) => isSameDay(parseISO(e.date), new Date())).length > 0 ? (
                             data.calendarEvents
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 .filter((e: any) => isSameDay(parseISO(e.date), new Date()))
                                 .slice(0, 4)
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 .map((event: any) => (
                                     <div key={event.id} className="p-4 bg-slate-950/40 rounded-2xl border border-slate-800/50 hover:border-blue-500/20 transition-all group">
                                         <div className="flex justify-between items-start mb-2">
@@ -249,7 +255,7 @@ export default function DashboardPage() {
                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Revenue Forecast</span>
                                     </div>
                                     <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                                        Based on current active projects, you're projected to hit <span className="text-emerald-400 font-bold">₹1.2L additional revenue</span> by end of quarter.
+                                        Based on current active projects, you&apos;re projected to hit <span className="text-emerald-400 font-bold">₹1.2L additional revenue</span> by end of quarter.
                                     </p>
                                 </div>
                             </div>

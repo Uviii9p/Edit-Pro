@@ -175,8 +175,8 @@ export default function ProjectsPage() {
                         className="p-6 bg-slate-900 border border-slate-800 rounded-2xl hover:border-blue-500/50 transition-all hover:translate-y-[-2px] group relative cursor-pointer hover:shadow-2xl hover:shadow-blue-500/10"
                     >
                         <div className="flex justify-between items-start mb-4">
-                            <span className={cn("px-3 py-1 rounded-full text-[10px] font-bold", getStatusColor(project.status))}>
-                                {project.status.replace('_', ' ')}
+                            <span className={cn("px-3 py-1 rounded-full text-[10px] font-bold", getStatusColor(project.status || 'PLANNING'))}>
+                                {(project.status || 'PLANNING').replace('_', ' ')}
                             </span>
                             <div className="relative">
                                 <button
@@ -239,8 +239,8 @@ export default function ProjectsPage() {
                         <div className="w-full bg-slate-800 h-1.5 rounded-full mt-6 overflow-hidden">
                             <motion.div
                                 initial={{ width: 0 }}
-                                animate={{ width: `${getProgressPercent(project.status)}%` }}
-                                className={cn("h-full rounded-full transition-all", getProgressColor(project.status))}
+                                animate={{ width: `${getProgressPercent(project.status || 'PLANNING')}%` }}
+                                className={cn("h-full rounded-full transition-all", getProgressColor(project.status || 'PLANNING'))}
                             />
                         </div>
 
@@ -249,7 +249,7 @@ export default function ProjectsPage() {
                                 <Clock size={12} strokeWidth={3} />
                                 <span>{getDaysLeft(project.deadline) || 'No deadline'}</span>
                             </div>
-                            <span className="text-[10px] normal-case">{getProgressPercent(project.status)}% complete</span>
+                            <span className="text-[10px] normal-case">{getProgressPercent(project.status || 'PLANNING')}% complete</span>
                         </div>
                     </motion.div>
                 ))}

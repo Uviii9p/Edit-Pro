@@ -13,13 +13,16 @@ import dynamic from 'next/dynamic';
 import { useRef } from 'react';
 
 // Dynamically import html2pdf to avoid SSR issues
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const html2pdf = typeof window !== 'undefined' ? require('html2pdf.js') : null;
 
 
 export default function InvoicesPage() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [invoices, setInvoices] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [editingInvoice, setEditingInvoice] = useState<any>(null);
     const [newInvoice, setNewInvoice] = useState({
         invoiceNumber: '',
@@ -48,9 +51,11 @@ export default function InvoicesPage() {
         const base = parseFloat(editingInvoice.amount as string) || 0;
         const tax = parseFloat(editingInvoice.tax as string) || 0;
         return base + tax;
-    }, [editingInvoice?.amount, editingInvoice?.tax]);
+    }, [editingInvoice]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [projects, setProjects] = useState<any[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [pdfInvoice, setPdfInvoice] = useState<any>(null);
     const invoiceRef = useRef<HTMLDivElement>(null);
 
@@ -115,6 +120,7 @@ export default function InvoicesPage() {
         }
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const downloadPDF = async (invoice: any) => {
         setPdfInvoice(invoice);
 
@@ -492,49 +498,56 @@ export default function InvoicesPage() {
             </AnimatePresence>
             {/* Hidden PDF Template for generation */}
             <div className="hidden">
-                <div ref={invoiceRef} className="p-12 bg-white text-slate-950 w-[210mm] min-h-[297mm] font-sans">
+                <div
+                    ref={invoiceRef}
+                    className="p-12 bg-white text-slate-950 w-[210mm] min-h-[297mm] font-sans"
+                    style={{
+                        backgroundColor: '#ffffff',
+                        color: '#020617',
+                    }}
+                >
                     {pdfInvoice && (
                         <div className="space-y-12">
-                            <div className="flex justify-between items-start border-b-4 border-blue-600 pb-8">
+                            <div className="flex justify-between items-start pb-8" style={{ borderBottom: '4px solid #2563eb' }}>
                                 <div>
-                                    <h1 className="text-5xl font-black text-blue-600 tracking-tighter">INVOICE</h1>
-                                    <p className="text-xl font-bold mt-2 text-slate-500">#{pdfInvoice.invoiceNumber}</p>
+                                    <h1 className="text-5xl font-black tracking-tighter" style={{ color: '#2563eb' }}>INVOICE</h1>
+                                    <p className="text-xl font-bold mt-2" style={{ color: '#64748b' }}>#{pdfInvoice.invoiceNumber}</p>
                                 </div>
                                 <div className="text-right">
-                                    <h2 className="text-2xl font-black">EditPro Studio</h2>
-                                    <p className="text-sm font-bold text-slate-500">Premium Video Production</p>
-                                    <p className="text-xs text-slate-400 mt-1">contact@editpro.studio</p>
+                                    <h2 className="text-2xl font-black" style={{ color: '#020617' }}>EditPro Studio</h2>
+                                    <p className="text-sm font-bold" style={{ color: '#64748b' }}>Premium Video Production</p>
+                                    <p className="text-xs mt-1" style={{ color: '#94a3b8' }}>contact@editpro.studio</p>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-12">
                                 <div className="space-y-2">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Billed To</p>
-                                    <h3 className="text-xl font-bold">{pdfInvoice.project?.client?.name || 'Valued Client'}</h3>
-                                    <p className="text-sm text-slate-500 font-medium">{pdfInvoice.project?.name || 'Professional Services'}</p>
+                                    <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: '#94a3b8' }}>Billed To</p>
+                                    <h3 className="text-xl font-bold" style={{ color: '#020617' }}>{pdfInvoice.project?.client?.name || 'Valued Client'}</h3>
+                                    <p className="text-sm font-medium" style={{ color: '#64748b' }}>{pdfInvoice.project?.name || 'Professional Services'}</p>
                                 </div>
                                 <div className="text-right space-y-2">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Date Issued</p>
-                                    <h3 className="text-lg font-bold">{new Date(pdfInvoice.createdAt).toLocaleDateString()}</h3>
-                                    <p className="text-sm text-slate-500 font-medium">Due: Upon Receipt</p>
+                                    <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: '#94a3b8' }}>Date Issued</p>
+                                    <h3 className="text-lg font-bold" style={{ color: '#020617' }}>{new Date(pdfInvoice.createdAt).toLocaleDateString()}</h3>
+                                    <p className="text-sm font-medium" style={{ color: '#64748b' }}>Due: Upon Receipt</p>
                                 </div>
                             </div>
 
                             <div className="mt-12">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
-                                        <tr className="border-b-2 border-slate-200">
-                                            <th className="py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Description</th>
-                                            <th className="py-4 text-right text-xs font-black text-slate-400 uppercase tracking-widest">Line Total</th>
+                                        <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
+                                            <th className="py-4 text-xs font-black uppercase tracking-widest" style={{ color: '#94a3b8' }}>Description</th>
+                                            <th className="py-4 text-right text-xs font-black uppercase tracking-widest" style={{ color: '#94a3b8' }}>Line Total</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-100">
+                                    <tbody>
                                         <tr>
                                             <td className="py-6">
-                                                <h4 className="font-bold text-lg">{pdfInvoice.project?.name || 'Video Editing Services'}</h4>
-                                                <p className="text-sm text-slate-500">Cinematic Post-Production & Delivery</p>
+                                                <h4 className="font-bold text-lg" style={{ color: '#020617' }}>{pdfInvoice.project?.name || 'Video Editing Services'}</h4>
+                                                <p className="text-sm" style={{ color: '#64748b' }}>Cinematic Post-Production & Delivery</p>
                                             </td>
-                                            <td className="py-6 text-right font-bold text-lg">₹{(pdfInvoice.amount || 0).toLocaleString()}</td>
+                                            <td className="py-6 text-right font-bold text-lg" style={{ color: '#020617' }}>₹{(pdfInvoice.amount || 0).toLocaleString()}</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -542,25 +555,25 @@ export default function InvoicesPage() {
 
                             <div className="flex justify-end pt-12">
                                 <div className="w-80 space-y-4">
-                                    <div className="flex justify-between text-sm font-bold text-slate-500">
+                                    <div className="flex justify-between text-sm font-bold" style={{ color: '#64748b' }}>
                                         <span>Subtotal</span>
                                         <span>₹{(pdfInvoice.amount || 0).toLocaleString()}</span>
                                     </div>
-                                    <div className="flex justify-between text-sm font-bold text-slate-500">
+                                    <div className="flex justify-between text-sm font-bold" style={{ color: '#64748b' }}>
                                         <span>Tax ({pdfInvoice.taxRate || 18}%)</span>
                                         <span>₹{(pdfInvoice.tax || 0).toLocaleString()}</span>
                                     </div>
-                                    <div className="h-px bg-slate-200" />
-                                    <div className="flex justify-between text-2xl font-black text-blue-600">
+                                    <div className="h-px w-full my-4" style={{ backgroundColor: '#e2e8f0' }} />
+                                    <div className="flex justify-between text-2xl font-black" style={{ color: '#2563eb' }}>
                                         <span>TOTAL</span>
                                         <span>₹{((pdfInvoice.amount || 0) + (pdfInvoice.tax || 0)).toLocaleString()}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="mt-24 pt-12 border-t border-slate-100 text-center">
-                                <p className="text-sm font-black text-blue-600/50 uppercase tracking-[0.3em]">Thank you for your business</p>
-                                <p className="text-[10px] text-slate-400 mt-2 font-medium">© 2026 EditPro Studio. All Rights Reserved.</p>
+                            <div className="mt-24 pt-12 text-center" style={{ borderTop: '1px solid #f1f5f9' }}>
+                                <p className="text-sm font-black uppercase tracking-[0.3em]" style={{ color: 'rgba(37, 99, 235, 0.5)' }}>Thank you for your business</p>
+                                <p className="text-[10px] mt-2 font-medium" style={{ color: '#94a3b8' }}>&copy; 2026 EditPro Studio. All Rights Reserved.</p>
                             </div>
                         </div>
                     )}

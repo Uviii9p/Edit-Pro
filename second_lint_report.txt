@@ -1,0 +1,68 @@
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\app\calendar\page.tsx
+    3:40  warning  'useRef' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+   56:95  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-explicit-any
+  119:9   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\app\calendar\page.tsx:119:9
+  117 |     // Initial Fetch
+  118 |     useEffect(() => {
+> 119 |         fetchData();
+      |         ^^^^^^^^^ Avoid calling setState() directly within an effect
+  120 |     }, []);
+  121 |
+  122 |     // Navigation  react-hooks/set-state-in-effect
+  186:11  warning  'filteredEvents' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\app\dashboard\page.tsx
+  73:21  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\app\invoices\page.tsx
+   7:5   warning  'Trash2' is defined but never used            @typescript-eslint/no-unused-vars
+   8:34  warning  'AlertCircle' is defined but never used       @typescript-eslint/no-unused-vars
+   8:50  warning  'CheckCircle' is defined but never used       @typescript-eslint/no-unused-vars
+  12:8   warning  'dynamic' is defined but never used           @typescript-eslint/no-unused-vars
+  23:12  warning  'loading' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\lib\api.ts
+   25:50  error    Unexpected any. Specify a different type                                                               @typescript-eslint/no-explicit-any
+   26:5   warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+   33:42  error    Unexpected any. Specify a different type                                                               @typescript-eslint/no-explicit-any
+   34:5   warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+   45:41  error    Unexpected any. Specify a different type                                                               @typescript-eslint/no-explicit-any
+   46:13  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+   49:35  warning  '_' is assigned a value but never used                                                                 @typescript-eslint/no-unused-vars
+   57:30  error    Unexpected any. Specify a different type                                                               @typescript-eslint/no-explicit-any
+   58:13  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+   61:32  error    Unexpected any. Specify a different type                                                               @typescript-eslint/no-explicit-any
+   72:31  warning  '_' is assigned a value but never used                                                                 @typescript-eslint/no-unused-vars
+   81:35  warning  '_config' is defined but never used                                                                    @typescript-eslint/no-unused-vars
+   81:45  error    Unexpected any. Specify a different type                                                               @typescript-eslint/no-explicit-any
+   82:9   warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  113:44  error    Unexpected any. Specify a different type                                                               @typescript-eslint/no-explicit-any
+  114:17  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  126:45  error    Unexpected any. Specify a different type                                                               @typescript-eslint/no-explicit-any
+  126:50  warning  '_config' is defined but never used                                                                    @typescript-eslint/no-unused-vars
+  126:60  error    Unexpected any. Specify a different type                                                               @typescript-eslint/no-explicit-any
+  127:9   warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  166:44  error    Unexpected any. Specify a different type                                                               @typescript-eslint/no-explicit-any
+  166:49  warning  '_config' is defined but never used                                                                    @typescript-eslint/no-unused-vars
+  166:59  error    Unexpected any. Specify a different type                                                               @typescript-eslint/no-explicit-any
+  167:9   warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  184:46  error    Unexpected any. Specify a different type                                                               @typescript-eslint/no-explicit-any
+  185:13  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  196:38  warning  '_config' is defined but never used                                                                    @typescript-eslint/no-unused-vars
+  196:48  error    Unexpected any. Specify a different type                                                               @typescript-eslint/no-explicit-any
+  197:9   warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  215:46  error    Unexpected any. Specify a different type                                                               @typescript-eslint/no-explicit-any
+  216:13  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+
+Γ£û 41 problems (16 errors, 25 warnings)
+  0 errors and 11 warnings potentially fixable with the `--fix` option.
+

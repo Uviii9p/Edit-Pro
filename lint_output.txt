@@ -1,0 +1,359 @@
+
+> editor_pro@0.1.0 lint
+> eslint
+
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\prisma_check.js
+  1:26  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\server\src\controllers\ai.ts
+   1:10  warning  'Request' is defined but never used       @typescript-eslint/no-unused-vars
+   4:45  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  10:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  15:49  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  21:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  26:46  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  32:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  37:41  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  43:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  48:45  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  54:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  59:42  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  65:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\server\src\controllers\auth.ts
+   36:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   67:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   73:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   80:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   85:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  107:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  112:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  136:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\server\src\controllers\bookings.ts
+   1:10  warning  'Request' is defined but never used       @typescript-eslint/no-unused-vars
+   4:42  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  33:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  38:40  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  44:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\server\src\controllers\dashboard.ts
+    1:10  warning  'Request' is defined but never used       @typescript-eslint/no-unused-vars
+    4:45  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  122:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\server\src\controllers\files.ts
+   1:10  warning  'Request' is defined but never used       @typescript-eslint/no-unused-vars
+   5:46  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  24:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  29:44  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  36:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\server\src\controllers\invoices.ts
+    5:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   17:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   28:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   33:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   40:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  107:83  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  130:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  150:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  162:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\server\src\controllers\meetings.ts
+   4:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  37:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  42:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  48:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  70:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  81:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\server\src\controllers\projects.ts
+    1:10  warning  'Request' is defined but never used       @typescript-eslint/no-unused-vars
+    4:42  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   32:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   37:40  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   50:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   55:43  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   71:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   76:42  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  109:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  114:39  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  139:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  144:41  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  168:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\server\src\controllers\tasks.ts
+    4:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   19:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   24:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   43:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   65:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   76:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   81:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   92:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   97:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  116:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\server\src\index.ts
+  22:10  warning  'prisma' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\server\src\middleware\auth.ts
+   5:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  21:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\server\src\utils\ai.ts
+  26:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\server\src\utils\notifications.ts
+  20:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  34:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\server\src\utils\storage.ts
+  13:13  warning  'data' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\app\calendar\page.tsx
+   15:5    warning  'CheckCircle2' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+   16:5    warning  'Search' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+   17:5    warning  'Filter' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+   18:5    warning  'MoreVertical' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+   19:5    warning  'Download' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+   20:5    warning  'Printer' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+   24:5    warning  'LayoutGrid' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+   25:5    warning  'LayoutList' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+   27:5    warning  'TrendingUp' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+   28:5    warning  'Trello' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+   36:142  warning  'getDay' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+   36:160  warning  'isWithinInterval' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+   36:190  warning  'endOfDay' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+   36:210  warning  'differenceInMinutes' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+   66:95   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+   81:46   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+   86:25   warning  'setSearchQuery' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+   87:24   warning  'setFilterType' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+  111:11   warning  'modalRef' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+  115:9    error    Error: Cannot access variable before it is declared
+
+`fetchData` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\app\calendar\page.tsx:115:9
+  113 |     // Initial Fetch
+  114 |     useEffect(() => {
+> 115 |         fetchData();
+      |         ^^^^^^^^^ `fetchData` accessed before it is declared
+  116 |     }, []);
+  117 |
+  118 |     const fetchData = async () => {
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\app\calendar\page.tsx:118:5
+  116 |     }, []);
+  117 |
+> 118 |     const fetchData = async () => {
+      |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 119 |         try {
+      | ^^^^^^^^^^^^^
+> 120 |             const [eventsResp, projectsResp] = await Promise.all([
+      ΓÇª
+      | ^^^^^^^^^^^^^
+> 128 |         }
+      | ^^^^^^^^^^^^^
+> 129 |     };
+      | ^^^^^^^ `fetchData` is declared here
+  130 |
+  131 |     // Navigation
+  132 |     const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));  react-hooks/immutability
+  195:11   warning  'filteredEvents' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+  500:89   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                react/no-unescaped-entities
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\app\dashboard\page.tsx
+    7:5    warning  'Users' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+    7:23   warning  'CheckCircle' is defined but never used                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   11:5    warning  'BarChart' is defined but never used                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   11:15   warning  'Bar' is defined but never used                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+   11:34   warning  'CartesianGrid' is defined but never used                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+   15:10   warning  'format' is defined but never used                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+   19:38   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+   72:21   warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+   72:21   warning  img elements must have an alt prop, either with meaningful text, or an empty string for decorative images                                                                                                                                                                                jsx-a11y/alt-text
+  153:56   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  178:115  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  187:59   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  189:45   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  191:46   error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  252:78   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\app\invoices\page.tsx
+    7:5   warning  'Trash2' is defined but never used                                                                               @typescript-eslint/no-unused-vars
+    8:34  warning  'AlertCircle' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+    8:50  warning  'CheckCircle' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+   12:8   warning  'dynamic' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+   16:50  error    A `require()` style import is forbidden                                                                          @typescript-eslint/no-require-imports
+   20:46  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+   21:12  warning  'loading' is assigned a value but never used                                                                     @typescript-eslint/no-unused-vars
+   23:58  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+   51:8   warning  React Hook useMemo has a missing dependency: 'editingInvoice'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   52:46  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+   54:50  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  118:41  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\app\login\page.tsx
+  27:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\app\projects\[id]\page.tsx
+    7:5    warning  'Calendar' is defined but never used                                                                             @typescript-eslint/no-unused-vars
+    7:15   warning  'Clock' is defined but never used                                                                                @typescript-eslint/no-unused-vars
+    7:22   warning  'IndianRupee' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+    7:35   warning  'MessageSquare' is defined but never used                                                                        @typescript-eslint/no-unused-vars
+    9:33   warning  'AlertCircle' is defined but never used                                                                          @typescript-eslint/no-unused-vars
+   11:5    warning  'Trash2' is defined but never used                                                                               @typescript-eslint/no-unused-vars
+   11:13   warning  'Edit3' is defined but never used                                                                                @typescript-eslint/no-unused-vars
+   27:12   error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+   28:17   error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+   29:15   error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+   30:17   error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+   40:39   error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+   45:8    warning  React Hook useEffect has a missing dependency: 'fetchProject'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  250:64   warning  'i' is defined but never used                                                                                    @typescript-eslint/no-unused-vars
+  295:122  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                  react/no-unescaped-entities
+  311:60   warning  'i' is defined but never used                                                                                    @typescript-eslint/no-unused-vars
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\app\projects\page.tsx
+   6:33  warning  'Trash2' is defined but never used            @typescript-eslint/no-unused-vars
+   6:47  warning  'ExternalLink' is defined but never used      @typescript-eslint/no-unused-vars
+   7:25  warning  'LayoutGrid' is defined but never used        @typescript-eslint/no-unused-vars
+   7:37  warning  'List' is defined but never used              @typescript-eslint/no-unused-vars
+  28:12  warning  'loading' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\app\register\page.tsx
+  27:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\app\settings\page.tsx
+    9:13  warning  'Mail' is defined but never used                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+    9:19  warning  'Lock' is defined but never used                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+   29:8   warning  React Hook useEffect has a missing dependency: 'name'. Either include it or remove the dependency array                                                                                                                                                                                  react-hooks/exhaustive-deps
+   80:23  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  155:37  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  155:37  warning  img elements must have an alt prop, either with meaningful text, or an empty string for decorative images                                                                                                                                                                                jsx-a11y/alt-text
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\app\tasks\page.tsx
+    8:22  warning  'ArrowRight' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   29:46  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-explicit-any
+   38:12  warning  'moveMenuTask' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+   41:9   error    Error: Cannot access variable before it is declared
+
+`fetchTasks` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\app\tasks\page.tsx:41:9
+  39 |
+  40 |     useEffect(() => {
+> 41 |         fetchTasks();
+     |         ^^^^^^^^^^ `fetchTasks` accessed before it is declared
+  42 |         fetchProjects();
+  43 |     }, []);
+  44 |
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\app\tasks\page.tsx:45:5
+  43 |     }, []);
+  44 |
+> 45 |     const fetchTasks = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 46 |         try {
+     | ^^^^^^^^^^^^^
+> 47 |             const resp = await api.get('/tasks');
+     | ^^^^^^^^^^^^^
+> 48 |             setTasks(resp.data);
+     | ^^^^^^^^^^^^^
+> 49 |         } catch (err) { console.error(err); }
+     | ^^^^^^^^^^^^^
+> 50 |     };
+     | ^^^^^^^ `fetchTasks` is declared here
+  51 |
+  52 |     const fetchProjects = async () => {
+  53 |         try {                                                                                             react-hooks/immutability
+   42:9   error    Error: Cannot access variable before it is declared
+
+`fetchProjects` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\app\tasks\page.tsx:42:9
+  40 |     useEffect(() => {
+  41 |         fetchTasks();
+> 42 |         fetchProjects();
+     |         ^^^^^^^^^^^^^ `fetchProjects` accessed before it is declared
+  43 |     }, []);
+  44 |
+  45 |     const fetchTasks = async () => {
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\app\tasks\page.tsx:52:5
+  50 |     };
+  51 |
+> 52 |     const fetchProjects = async () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 53 |         try {
+     | ^^^^^^^^^^^^^
+> 54 |             const resp = await api.get('/projects');
+     | ^^^^^^^^^^^^^
+> 55 |             setProjects(resp.data);
+     | ^^^^^^^^^^^^^
+> 56 |         } catch (err) { console.error(err); }
+     | ^^^^^^^^^^^^^
+> 57 |     };
+     | ^^^^^^^ `fetchProjects` is declared here
+  58 |
+  59 |     const handleCreateTask = async (e: React.FormEvent) => {
+  60 |         e.preventDefault();  react-hooks/immutability
+  150:11  warning  'getNextStatus' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\components\AuthProvider.tsx
+  8:27  warning  'isAuthenticated' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\components\ClientLayout.tsx
+  20:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\components\ClientLayout.tsx:20:9
+  18 |     // Close sidebar when route changes
+  19 |     useEffect(() => {
+> 20 |         setIsSidebarOpen(false);
+     |         ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  21 |
+  22 |         // Register PWA service worker
+  23 |         if ('serviceWorker' in navigator) {  react-hooks/set-state-in-effect
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\lib\api.ts
+   25:50  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   31:42  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   41:41  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   43:35  warning  '_' is assigned a value but never used    @typescript-eslint/no-unused-vars
+   51:30  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   53:32  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   64:31  warning  '_' is assigned a value but never used    @typescript-eslint/no-unused-vars
+   73:35  warning  '_config' is defined but never used       @typescript-eslint/no-unused-vars
+   73:45  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  103:44  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  114:45  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  114:50  warning  '_config' is defined but never used       @typescript-eslint/no-unused-vars
+  114:60  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  152:44  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  152:49  warning  '_config' is defined but never used       @typescript-eslint/no-unused-vars
+  152:59  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  168:46  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  178:38  warning  '_config' is defined but never used       @typescript-eslint/no-unused-vars
+  178:48  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  195:46  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\src\store\useAuthStore.ts
+   5:11  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   8:23  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  29:18  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+
+C:\Users\Sujal Rathod\Desktop\editor_pro\write_schema.js
+  1:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+Γ£û 190 problems (120 errors, 70 warnings)
+

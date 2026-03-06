@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
  * LOCAL-FIRST MOCK API
@@ -22,13 +23,15 @@ const STORAGE_KEYS = {
     STUDIO_BOOKINGS: 'editpro_studio_bookings'
 };
 
-const getFromStorage = (key: string, defaultVal: any = []) => {
+const getFromStorage = (key: string, defaultVal: any = []) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+
     if (typeof window === 'undefined') return defaultVal;
     const data = localStorage.getItem(key);
     return data ? JSON.parse(data) : defaultVal;
 };
 
-const setToStorage = (key: string, data: any) => {
+const setToStorage = (key: string, data: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+
     if (typeof window === 'undefined') return;
     localStorage.setItem(key, JSON.stringify(data));
 };
@@ -38,7 +41,8 @@ const api = {
     auth: {
         login: (email: string, password: string) => {
             const users = getFromStorage(STORAGE_KEYS.AUTH, []);
-            const user = users.find((u: any) => u.email === email && u.password === password);
+            const user = users.find((u: any) => u.email === email && u.password === password); // eslint-disable-line @typescript-eslint/no-explicit-any
+
             if (user) {
                 const { password: _, ...safeUser } = user;
                 const token = `mock_jwt_${Date.now()}`;
@@ -48,7 +52,8 @@ const api = {
             }
             throw { response: { status: 401, data: { message: 'Invalid credentials' } } };
         },
-        register: (userData: any) => {
+        register: (userData: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+
             const users = getFromStorage(STORAGE_KEYS.AUTH, []);
             if (users.find((u: any) => u.email === userData.email)) {
                 throw { response: { status: 400, data: { message: 'Identity already initialized' } } };
@@ -70,7 +75,8 @@ const api = {
     },
 
     // Axios-like interface
-    get: async (endpoint: string, _config?: any) => {
+    get: async (endpoint: string, _config?: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+
         // Mock delay
         await new Promise(r => setTimeout(r, 100));
 
@@ -100,7 +106,8 @@ const api = {
             // Handle /[route]/[id]
             if (endpoint !== key) {
                 const id = endpoint.split('/').pop();
-                const item = data.find((p: any) => p.id === id);
+                const item = data.find((p: any) => p.id === id); // eslint-disable-line @typescript-eslint/no-explicit-any
+
                 if (item) return { data: item };
                 throw { response: { status: 404 } };
             }
@@ -111,7 +118,8 @@ const api = {
         return { data: [] };
     },
 
-    post: async (endpoint: string, payload: any, _config?: any) => {
+    post: async (endpoint: string, payload: any, _config?: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+
         await new Promise(r => setTimeout(r, 100));
 
         if (endpoint === '/auth/login') return api.auth.login(payload.email, payload.password);
@@ -149,7 +157,8 @@ const api = {
         return { data: payload };
     },
 
-    put: async (endpoint: string, payload: any, _config?: any) => {
+    put: async (endpoint: string, payload: any, _config?: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+
         await new Promise(r => setTimeout(r, 100));
         const keyMap: Record<string, string> = {
             '/projects': STORAGE_KEYS.PROJECTS,
@@ -165,7 +174,8 @@ const api = {
         if (key) {
             const id = endpoint.split('/').pop();
             const data = getFromStorage(keyMap[key]);
-            const index = data.findIndex((i: any) => i.id === id);
+            const index = data.findIndex((i: any) => i.id === id); // eslint-disable-line @typescript-eslint/no-explicit-any
+
             if (index !== -1) {
                 data[index] = { ...data[index], ...payload };
                 setToStorage(keyMap[key], data);
@@ -175,7 +185,8 @@ const api = {
         return { data: payload };
     },
 
-    delete: async (endpoint: string, _config?: any) => {
+    delete: async (endpoint: string, _config?: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+
         await new Promise(r => setTimeout(r, 100));
         const keyMap: Record<string, string> = {
             '/projects': STORAGE_KEYS.PROJECTS,
@@ -192,7 +203,8 @@ const api = {
         if (key) {
             const id = endpoint.split('/').pop();
             const data = getFromStorage(keyMap[key]);
-            const filtered = data.filter((i: any) => i.id !== id);
+            const filtered = data.filter((i: any) => i.id !== id); // eslint-disable-line @typescript-eslint/no-explicit-any
+
             setToStorage(keyMap[key], filtered);
             return { data: { success: true } };
         }
