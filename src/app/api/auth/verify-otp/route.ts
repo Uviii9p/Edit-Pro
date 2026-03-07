@@ -6,14 +6,17 @@ import { JWT_SECRET } from '@/lib/constants';
 export async function POST(req: Request) {
     try {
         const { email, otp, otpToken } = await req.json();
+        console.log(`[VERIFY-OTP] Start for: ${email}`);
 
         if (!otpToken) {
+            console.error('[VERIFY-OTP] Missing otpToken');
             return NextResponse.json({ message: 'Missing session token. Please request a new OTP.' }, { status: 400 });
         }
 
         try {
-            // Verify and decode the token
+            console.log(`[VERIFY-OTP] Verifying token for ${email}...`);
             const decoded: any = jwt.verify(otpToken, JWT_SECRET);
+            console.log(`[VERIFY-OTP] Token decoded. Email in token: ${decoded.email}`);
 
             // Security checks
             if (decoded.email !== email) {

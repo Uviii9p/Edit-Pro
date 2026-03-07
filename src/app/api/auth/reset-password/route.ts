@@ -7,15 +7,20 @@ import { JWT_SECRET } from '@/lib/constants';
 export async function POST(req: Request) {
     try {
         const { email, newPassword, resetToken } = await req.json();
+        console.log(`[RESET-PASSWORD] Start for: ${email}`);
 
         if (!resetToken) {
+            console.error('[RESET-PASSWORD] No resetToken provided');
             return NextResponse.json({ message: 'Unauthorized. Verification required.' }, { status: 403 });
         }
 
         try {
+            console.log('[RESET-PASSWORD] Verifying resetToken...');
             const decoded: any = jwt.verify(resetToken, JWT_SECRET);
+            console.log(`[RESET-PASSWORD] Decoded email: ${decoded.email}, Verified: ${decoded.verified}`);
 
             if (decoded.email !== email || !decoded.verified) {
+                console.error(`[RESET-PASSWORD] Mismatch: ${decoded.email} vs ${email}`);
                 return NextResponse.json({ message: 'Invalid session.' }, { status: 403 });
             }
 
@@ -31,7 +36,8 @@ export async function POST(req: Request) {
 
             return NextResponse.json({ message: 'Password reset successfully! You can now log in.' });
 
-        } catch (err) {
+        } catch (err: any) {
+            console.error('[RESET-PASSWORD] JWT Verify Error:', err.name, err.message);
             return NextResponse.json({ message: 'Session expired. Please start over.' }, { status: 403 });
         }
     } catch (error: any) {
