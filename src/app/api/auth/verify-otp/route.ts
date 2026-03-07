@@ -1,22 +1,48 @@
 import { NextResponse } from 'next/server';
-import otps from '@/lib/otp-store';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-for-otp';
 
 export async function POST(req: Request) {
     try {
-        const { email, otp } = await req.json();
-        const record = otps[email];
+        const { email, otp, otpToken } = await req.json();
 
-        if (!record) return NextResponse.json({ message: 'No OTP requested for this email.' }, { status: 400 });
-        if (Date.now() > record.expiresAt) return NextResponse.json({ message: 'OTP has expired.' }, { status: 400 });
-        if (record.attempts >= 3) return NextResponse.json({ message: 'Max attempts exceeded.' }, { status: 429 });
-
-        if (record.otp !== otp) {
-            record.attempts += 1;
-            return NextResponse.json({ message: 'Invalid OTP code.' }, { status: 400 });
+        if (!otpToken) {
+            return NextResponse.json({ message: 'Missing session token. Please request a new OTP.' }, { status: 400 });
         }
 
-        record.verified = true;
-        return NextResponse.json({ message: 'OTP verified successfully.' });
+        try {
+            // Verify and decode the token
+            const decoded: any = jwt.verify(otpToken, JWT_SECRET);
+
+            // Security checks
+            if (decoded.email !== email) {
+                return NextResponse.json({ message: 'Session mismatch. Please try again.' }, { status: 400 });
+            }
+
+            if (decoded.otp !== otp) {
+                return NextResponse.json({ message: 'Invalid OTP code. Please check your email.' }, { status: 400 });
+            }
+
+            // Valid! Now grant a reset token
+            const resetToken = jwt.sign(
+                { email, verified: true },
+                JWT_SECRET,
+                { expiresIn: '10m' }
+            );
+
+            return NextResponse.json({
+                message: 'OTP verified successfully.',
+                resetToken
+            });
+
+        } catch (err: any) {
+            if (err.name === 'TokenExpiredError') {
+                return NextResponse.json({ message: 'OTP has expired. Please request a new one.' }, { status: 400 });
+            }
+            return NextResponse.json({ message: 'Invalid or corrupted session. Please try again.' }, { status: 400 });
+        }
+
     } catch (error) {
         return NextResponse.json({ message: 'Internal Error' }, { status: 500 });
     }

@@ -353,7 +353,7 @@ const api = {
         if (endpoint === '/auth/login') return api.auth.login(payload.email, payload.password);
         if (endpoint === '/auth/register') return api.auth.register(payload);
 
-        // --- OTP AUTH: Call Internal API Routes (Works on Vercel) ---
+        // --- OTP AUTH: Stateless JWT Flow (Perfect for Vercel) ---
         if (endpoint === '/auth/send-otp' || endpoint === '/auth/verify-otp' || endpoint === '/auth/reset-password') {
             const res = await fetch(`/api${endpoint}`, {
                 method: 'POST',
@@ -362,6 +362,8 @@ const api = {
             });
             const data = await res.json();
             if (!res.ok) throw { response: { status: res.status, data } };
+
+            // Pass the tokens back up to the caller
             return { data };
         }
         // -----------------------------------------------------------

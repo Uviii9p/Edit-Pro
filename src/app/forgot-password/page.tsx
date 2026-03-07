@@ -17,6 +17,8 @@ export default function ForgotPasswordPage() {
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
     const [resendCooldown, setResendCooldown] = useState(0);
+    const [otpToken, setOtpToken] = useState('');
+    const [resetToken, setResetToken] = useState('');
     const router = useRouter();
 
     // Resend cooldown timer
@@ -37,16 +39,23 @@ export default function ForgotPasswordPage() {
         setLoading(true);
 
         try {
-            await api.post('/auth/send-otp', { email });
-            // OTP is sent to email via backend — NEVER displayed on frontend
-            setSuccess('OTP has been sent to your email. Please check your inbox.');
+            const res = await api.post('/auth/send-otp', { email });
+            // Save the session token for stateless verification
+            setOtpToken(res.data.otpToken);
+
+            // OTP is sent to email via backend — NEVER displayed on frontend unless in DEV MODE
+            if (res.data.devOtp) {
+                setSuccess(`[DEV MODE] OTP: ${res.data.devOtp} (Sent to inbox)`);
+            } else {
+                setSuccess('OTP has been sent to your email. Please check your inbox.');
+            }
 
             setResendCooldown(30);
             if (step === 1) {
                 setTimeout(() => {
                     setStep(2);
                     setSuccess('');
-                }, 2000);
+                }, res.data.devOtp ? 5000 : 2000);
             }
         } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
             setError(err.response?.data?.message || 'Failed to send OTP. Please try again.');
@@ -65,7 +74,8 @@ export default function ForgotPasswordPage() {
         setLoading(true);
 
         try {
-            const res = await api.post('/auth/verify-otp', { email, otp });
+            const res = await api.post('/auth/verify-otp', { email, otp, otpToken });
+            setResetToken(res.data.resetToken);
             setSuccess(res.data.message || 'OTP verified successfully!');
             setTimeout(() => {
                 setSuccess('');
@@ -95,7 +105,7 @@ export default function ForgotPasswordPage() {
         setLoading(true);
 
         try {
-            const res = await api.post('/auth/reset-password', { email, newPassword, confirmPassword });
+            const res = await api.post('/auth/reset-password', { email, newPassword, confirmPassword, resetToken });
             setSuccess(res.data.message || 'Password reset successfully!');
             setTimeout(() => {
                 router.push('/login');
