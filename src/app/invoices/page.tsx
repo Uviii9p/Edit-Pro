@@ -594,56 +594,56 @@ export default function InvoicesPage() {
                     }}
                 >
                     {pdfInvoice ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', height: '100%' }}>
                             {/* PDF Content (Hardcoded Hex Colors for Canvas Parser Compatibility) */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '4px solid #0f172a', paddingBottom: '40px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '4px solid #0f172a', paddingBottom: '24px' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    <h1 style={{ fontSize: '36px', fontWeight: 900, color: '#0f172a', margin: 0 }}>{editorDetails.companyName}</h1>
+                                    <h1 style={{ fontSize: '32px', fontWeight: 900, color: '#0f172a', margin: 0 }}>{editorDetails.companyName}</h1>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                        <p style={{ fontSize: '14px', color: '#475569', fontWeight: 700, margin: 0 }}>{editorDetails.website}</p>
-                                        <p style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Studio Manager Identity</p>
+                                        <p style={{ fontSize: '13px', color: '#475569', fontWeight: 700, margin: 0 }}>{editorDetails.website}</p>
+                                        <p style={{ fontSize: '9px', color: '#94a3b8', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Studio Manager Identity</p>
                                     </div>
-                                    <p style={{ fontSize: '12px', color: '#64748b', marginTop: '16px', maxWidth: '300px', lineHeight: 1.5, fontWeight: 500 }}>{editorDetails.address}</p>
+                                    <p style={{ fontSize: '11px', color: '#64748b', marginTop: '12px', maxWidth: '280px', lineHeight: 1.5, fontWeight: 500 }}>{editorDetails.address}</p>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
-                                    <div style={{ backgroundColor: '#0f172a', color: '#ffffff', padding: '8px 24px', borderRadius: '12px', display: 'inline-block', marginBottom: '16px' }}>
-                                        <h2 style={{ fontSize: '24px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-0.05em', margin: 0 }}>INVOICE</h2>
+                                    <div style={{ backgroundColor: '#0f172a', color: '#ffffff', padding: '6px 20px', borderRadius: '10px', display: 'inline-block', marginBottom: '12px' }}>
+                                        <h2 style={{ fontSize: '20px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-0.05em', margin: 0 }}>INVOICE</h2>
                                     </div>
-                                    <p style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: 0 }}>#{pdfInvoice.invoiceNumber}</p>
-                                    <div style={{ marginTop: '8px' }}>
-                                        <p style={{ fontSize: '10px', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Issued On</p>
-                                        <p style={{ fontSize: '14px', fontWeight: 700, color: '#334155', margin: 0 }}>{new Date(pdfInvoice.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                                    <p style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a', margin: 0 }}>#{pdfInvoice.invoiceNumber}</p>
+                                    <div style={{ marginTop: '6px' }}>
+                                        <p style={{ fontSize: '9px', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Issued On</p>
+                                        <p style={{ fontSize: '12px', fontWeight: 700, color: '#334155', margin: 0 }}>{new Date(pdfInvoice.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '64px', paddingTop: '32px', paddingBottom: '32px' }}>
-                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <div style={{ display: 'flex', gap: '48px', paddingTop: '16px', paddingBottom: '16px' }}>
+                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                     <div>
-                                        <p style={{ fontSize: '10px', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '12px' }}>Bill To</p>
-                                        <h3 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', marginBottom: '4px', margin: 0 }}>{pdfInvoice.project?.clientName || 'Valued Client'}</h3>
-                                        <p style={{ fontSize: '14px', color: '#475569', fontWeight: 700, margin: 0 }}>{pdfInvoice.project?.clientEmail || 'client@example.com'}</p>
+                                        <p style={{ fontSize: '9px', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '8px' }}>Bill To</p>
+                                        <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', marginBottom: '4px', margin: 0 }}>{pdfInvoice.project?.clientName || 'Valued Client'}</h3>
+                                        <p style={{ fontSize: '13px', color: '#475569', fontWeight: 700, margin: 0 }}>{pdfInvoice.project?.clientEmail || 'client@example.com'}</p>
                                     </div>
-                                    <div style={{ paddingTop: '8px' }}>
-                                        <p style={{ fontSize: '12px', color: '#64748b', fontWeight: 500, lineHeight: 1.5, margin: 0 }}>{pdfInvoice.project?.clientAddress || 'Client Location unavailable'}</p>
+                                    <div style={{ paddingTop: '6px' }}>
+                                        <p style={{ fontSize: '11px', color: '#64748b', fontWeight: 500, lineHeight: 1.5, margin: 0 }}>{pdfInvoice.project?.clientAddress || 'Client Location unavailable'}</p>
                                     </div>
                                 </div>
-                                <div style={{ flex: 1, backgroundColor: '#f8fafc', padding: '32px', borderRadius: '40px', border: '1px solid #f1f5f9' }}>
-                                    <p style={{ fontSize: '10px', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '16px', margin: 0 }}>Settlement Info</p>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
+                                <div style={{ flex: 1, backgroundColor: '#f8fafc', padding: '24px', borderRadius: '32px', border: '1px solid #f1f5f9' }}>
+                                    <p style={{ fontSize: '9px', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '12px', margin: 0 }}>Settlement Info</p>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px' }}>
                                             <span style={{ fontWeight: 700, color: '#64748b' }}>Bank</span>
                                             <span style={{ fontWeight: 900, color: '#0f172a' }}>{editorDetails.bankName}</span>
                                         </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px' }}>
                                             <span style={{ fontWeight: 700, color: '#64748b' }}>Account</span>
                                             <span style={{ fontWeight: 900, color: '#0f172a', fontFamily: 'monospace' }}>{editorDetails.accountNo}</span>
                                         </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px' }}>
                                             <span style={{ fontWeight: 700, color: '#64748b' }}>IFSC</span>
                                             <span style={{ fontWeight: 900, color: '#0f172a', fontFamily: 'monospace', textTransform: 'uppercase' }}>{editorDetails.ifsc}</span>
                                         </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px' }}>
                                             <span style={{ fontWeight: 700, color: '#64748b' }}>UPI ID</span>
                                             <span style={{ fontWeight: 900, color: '#2563eb', fontFamily: 'monospace' }}>{editorDetails.upi}</span>
                                         </div>
@@ -651,52 +651,52 @@ export default function InvoicesPage() {
                                 </div>
                             </div>
 
-                            <div style={{ marginTop: '24px' }}>
+                            <div style={{ marginTop: '8px' }}>
                                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                     <thead>
                                         <tr style={{ borderBottom: '2px solid #0f172a' }}>
-                                            <th style={{ padding: '16px 0', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#94a3b8', textAlign: 'left' }}>Services Description</th>
-                                            <th style={{ padding: '16px 0', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#94a3b8', textAlign: 'right' }}>Amount (INR)</th>
+                                            <th style={{ padding: '12px 0', fontSize: '9px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#94a3b8', textAlign: 'left' }}>Services Description</th>
+                                            <th style={{ padding: '12px 0', fontSize: '9px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#94a3b8', textAlign: 'right' }}>Amount (INR)</th>
                                         </tr>
                                     </thead>
                                     <tbody style={{ borderBottom: '1px solid #f1f5f9' }}>
                                         <tr>
-                                            <td style={{ padding: '40px 0' }}>
-                                                <p style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a', margin: 0 }}>{pdfInvoice.project?.name || 'Professional Services'}</p>
-                                                <p style={{ fontSize: '12px', color: '#64748b', marginTop: '8px', fontWeight: 500, fontStyle: 'italic', borderLeft: '2px solid #e2e8f0', paddingLeft: '16px', margin: 0 }}>Digital media creation, post-production services and technical consultation provided for the specified project duration.</p>
+                                            <td style={{ padding: '24px 0' }}>
+                                                <p style={{ fontSize: '16px', fontWeight: 900, color: '#0f172a', margin: 0 }}>{pdfInvoice.project?.name || 'Professional Services'}</p>
+                                                <p style={{ fontSize: '11px', color: '#64748b', marginTop: '6px', fontWeight: 500, fontStyle: 'italic', borderLeft: '2px solid #e2e8f0', paddingLeft: '12px', margin: 0 }}>Digital media creation, post-production services and technical consultation provided for the specified project duration.</p>
                                             </td>
-                                            <td style={{ padding: '40px 0', textAlign: 'right', verticalAlign: 'top' }}>
-                                                <p style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', margin: 0 }}>₹{pdfInvoice.amount?.toLocaleString()}</p>
+                                            <td style={{ padding: '24px 0', textAlign: 'right', verticalAlign: 'top' }}>
+                                                <p style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a', margin: 0 }}>₹{pdfInvoice.amount?.toLocaleString()}</p>
                                             </td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '48px', backgroundColor: '#f8fafc', padding: '40px', borderRadius: '48px' }}>
-                                <div style={{ width: '320px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px', backgroundColor: '#f8fafc', padding: '32px', borderRadius: '40px' }}>
+                                <div style={{ width: '280px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                                         <span>Subtotal</span>
                                         <span style={{ color: '#0f172a' }}>₹{pdfInvoice.amount?.toLocaleString()}</span>
                                     </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', borderBottom: '1px solid #e2e8f0', paddingBottom: '16px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
                                         <span>GST ({pdfInvoice.taxRate}%)</span>
                                         <span style={{ color: '#0f172a' }}>₹{pdfInvoice.tax?.toLocaleString()}</span>
                                     </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                            <span style={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#94a3b8', textDecoration: 'underline', textDecorationColor: '#3b82f6', textDecorationThickness: '4px' }}>Grand Total</span>
-                                            <p style={{ fontSize: '8px', fontWeight: 700, color: '#94a3b8', fontStyle: 'italic', margin: 0 }}>Inclusive of all taxes</p>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '6px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                            <span style={{ fontSize: '9px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#94a3b8', textDecoration: 'underline', textDecorationColor: '#3b82f6', textDecorationThickness: '3px' }}>Grand Total</span>
+                                            <p style={{ fontSize: '7px', fontWeight: 700, color: '#94a3b8', fontStyle: 'italic', margin: 0 }}>Inclusive of all taxes</p>
                                         </div>
-                                        <span style={{ fontSize: '36px', fontWeight: 900, color: '#0f172a', lineHeight: 1 }}>₹{((pdfInvoice.amount || 0) + (pdfInvoice.tax || 0)).toLocaleString()}</span>
+                                        <span style={{ fontSize: '32px', fontWeight: 900, color: '#0f172a', lineHeight: 1 }}>₹{((pdfInvoice.amount || 0) + (pdfInvoice.tax || 0)).toLocaleString()}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div style={{ marginTop: 'auto', paddingTop: '96px', textAlign: 'center' }}>
-                                <div style={{ borderTop: '2px solid #f1f5f9', paddingTop: '32px', display: 'inline-block', paddingLeft: '48px', paddingRight: '48px' }}>
-                                    <p style={{ fontSize: '10px', fontWeight: 900, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.3em', marginBottom: '8px', margin: 0 }}>Authenticated Studio Document</p>
-                                    <p style={{ fontSize: '8px', color: '#cbd5e1', fontWeight: 700, maxWidth: '320px', margin: '0 auto' }}>This document is electronically generated by EditPro Studio Manager. No physical signature is required for validity. 2026 Studio Operations.</p>
+                            <div style={{ marginTop: 'auto', paddingTop: '40px', textAlign: 'center' }}>
+                                <div style={{ borderTop: '2px solid #f1f5f9', paddingTop: '24px', display: 'inline-block', paddingLeft: '40px', paddingRight: '40px' }}>
+                                    <p style={{ fontSize: '9px', fontWeight: 900, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.3em', marginBottom: '6px', margin: 0 }}>Authenticated Studio Document</p>
+                                    <p style={{ fontSize: '7px', color: '#cbd5e1', fontWeight: 700, maxWidth: '280px', margin: '0 auto' }}>This document is electronically generated by EditPro Studio Manager. No physical signature is required for validity. 2026 Studio Operations.</p>
                                 </div>
                             </div>
                         </div>
