@@ -353,10 +353,9 @@ const api = {
         if (endpoint === '/auth/login') return api.auth.login(payload.email, payload.password);
         if (endpoint === '/auth/register') return api.auth.register(payload);
 
-        // --- OTP AUTH: Call REAL backend (OTP sent via Gmail, never shown on frontend) ---
+        // --- OTP AUTH: Call Internal API Routes (Works on Vercel) ---
         if (endpoint === '/auth/send-otp' || endpoint === '/auth/verify-otp' || endpoint === '/auth/reset-password') {
-            const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-            const res = await fetch(`${backendUrl}/api${endpoint}`, {
+            const res = await fetch(`/api${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)

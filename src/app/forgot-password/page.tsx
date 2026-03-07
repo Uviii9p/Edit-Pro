@@ -37,15 +37,20 @@ export default function ForgotPasswordPage() {
         setLoading(true);
 
         try {
-            await api.post('/auth/send-otp', { email });
-            // OTP is sent to email via backend — NEVER displayed on frontend
-            setSuccess('OTP has been sent to your email. Please check your inbox.');
+            const res = await api.post('/auth/send-otp', { email });
+            // OTP is sent to email via backend — NEVER displayed on frontend unless in DEV MODE
+            if (res.data.devOtp) {
+                setSuccess(`[DEV MODE] OTP: ${res.data.devOtp} (Sent to inbox)`);
+            } else {
+                setSuccess('OTP has been sent to your email. Please check your inbox.');
+            }
+
             setResendCooldown(30);
             if (step === 1) {
                 setTimeout(() => {
                     setStep(2);
                     setSuccess('');
-                }, 2000);
+                }, res.data.devOtp ? 5000 : 2000);
             }
         } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
             setError(err.response?.data?.message || 'Failed to send OTP. Please try again.');
