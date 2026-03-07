@@ -2,6 +2,17 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma';
+import nodemailer from 'nodemailer';
+
+const otps: Record<string, { otp: string, expiresAt: number, attempts: number, lastSent: number, verified: boolean }> = {};
+
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
 
 export const register = async (req: Request, res: Response) => {
     const { email, password, name, role } = req.body;
@@ -133,6 +144,103 @@ export const changePassword = async (req: any, res: Response) => {
         });
 
         res.json({ message: 'Password changed successfully' });
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+export const sendOtp = async (req: Request, res: Response) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Email is required.' });
+
+    try {
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user) return res.status(404).json({ message: 'User with this email not found.' });
+
+        const now = Date.now();
+        const record = otps[email];
+
+        if (record && now - record.lastSent < 30000) {
+            return res.status(429).json({ message: 'Please wait 30 seconds before requesting another OTP.' });
+        }
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+        otps[email] = {
+            otp,
+            expiresAt: now + 5 * 60 * 1000,
+            attempts: 0,
+            lastSent: now,
+            verified: false
+        };
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'Password Reset OTP - EditPro',
+            text: `Hello,\n\nYour OTP for password reset is: ${otp}\nThis OTP will expire in 5 minutes.\n\nIf you did not request this, please ignore this email.`
+        };
+
+        await transporter.sendMail(mailOptions);
+        res.json({ message: 'OTP securely dispatched to your email address.' });
+    } catch (err: any) {
+        console.error("[AUTH] Nodemailer Error:", err);
+        res.status(500).json({ message: 'Failed to send OTP email.' });
+    }
+};
+
+export const verifyOtp = async (req: Request, res: Response) => {
+    const { email, otp } = req.body;
+    if (!email || !otp) return res.status(400).json({ message: 'Email & OTP are required.' });
+
+    const record = otps[email];
+    if (!record) return res.status(400).json({ message: 'No OTP currently requested for this email.' });
+
+    if (Date.now() > record.expiresAt) {
+        delete otps[email];
+        return res.status(400).json({ message: 'Your OTP has expired.' });
+    }
+
+    if (record.attempts >= 3) {
+        delete otps[email];
+        return res.status(429).json({ message: 'Maximum failure attempts reached.' });
+    }
+
+    if (record.otp !== otp) {
+        record.attempts += 1;
+        return res.status(400).json({ message: `Invalid OTP code. ${3 - record.attempts} attempts remaining.` });
+    }
+
+    record.verified = true;
+    res.json({ message: 'OTP verified successfully! You can reset your password.' });
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+    const { email, newPassword, confirmPassword } = req.body;
+
+    if (!email || !newPassword || !confirmPassword) {
+        return res.status(400).json({ message: 'Complete form parameters are required.' });
+    }
+    if (newPassword !== confirmPassword) {
+        return res.status(400).json({ message: 'Passwords do not match.' });
+    }
+
+    const record = otps[email];
+    if (!record || !record.verified) {
+        return res.status(403).json({ message: 'OTP unverified. Verify an OTP first.' });
+    }
+
+    try {
+        const salt = await bcrypt.genSalt(12);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        await prisma.user.update({
+            where: { email },
+            data: { password: hashedPassword },
+        });
+
+        delete otps[email];
+        res.json({ message: 'Password has been safely reset.' });
     } catch (error: any) {
         res.status(500).json({ message: error.message });
     }
