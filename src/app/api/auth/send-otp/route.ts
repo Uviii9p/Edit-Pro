@@ -29,7 +29,10 @@ export async function POST(req: Request) {
         const EMAIL_USER = process.env.EMAIL_USER;
         const EMAIL_PASS = process.env.EMAIL_PASS;
 
-        if (EMAIL_USER && EMAIL_PASS && EMAIL_USER !== 'your-email@gmail.com') {
+        console.log(`[AUTH] Attempting OTP send for: ${email}`);
+        console.log(`[AUTH] Configured Email: ${EMAIL_USER ? 'YES' : 'NO'}`);
+
+        if (EMAIL_USER && EMAIL_PASS) {
             const transporter = nodemailer.createTransport({
                 service: 'gmail',
                 auth: { user: EMAIL_USER, pass: EMAIL_PASS }
