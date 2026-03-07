@@ -353,43 +353,17 @@ const api = {
         if (endpoint === '/auth/login') return api.auth.login(payload.email, payload.password);
         if (endpoint === '/auth/register') return api.auth.register(payload);
 
-        // --- OTP AUTH MOCKS (For Vercel Edge Serverless Support) ---
-        if (endpoint === '/auth/send-otp') {
-            const users = getFromStorage(STORAGE_KEYS.AUTH, []);
-            const user = users.find((u: any) => u.email === payload.email);
-            if (!user) throw { response: { status: 404, data: { message: 'User with this email not found.' } } };
-
-            const otp = Math.floor(100000 + Math.random() * 900000).toString();
-            setToStorage(`mock_otp_${payload.email}`, { otp, expiresAt: Date.now() + 5 * 60000, verified: false });
-
-            // For a fully functional Vercel demo, we pass the OTP straight back in the success message!
-            return { data: { message: `Your OTP code is: ${otp}`, demoOtp: otp } };
-        }
-
-        if (endpoint === '/auth/verify-otp') {
-            const record = getFromStorage(`mock_otp_${payload.email}`, null);
-            if (!record) throw { response: { status: 400, data: { message: 'No OTP currently requested.' } } };
-            if (Date.now() > record.expiresAt) throw { response: { status: 400, data: { message: 'Your OTP has expired.' } } };
-            if (record.otp !== payload.otp) throw { response: { status: 400, data: { message: 'Invalid OTP code.' } } };
-
-            record.verified = true;
-            setToStorage(`mock_otp_${payload.email}`, record);
-            return { data: { message: 'OTP Verified successfully!' } };
-        }
-
-        if (endpoint === '/auth/reset-password') {
-            const record = getFromStorage(`mock_otp_${payload.email}`, null);
-            if (!record || !record.verified) throw { response: { status: 403, data: { message: 'OTP unverified. Verify first.' } } };
-
-            const users = getFromStorage(STORAGE_KEYS.AUTH, []);
-            const index = users.findIndex((u: any) => u.email === payload.email);
-            if (index !== -1) {
-                users[index].password = payload.newPassword;
-                setToStorage(STORAGE_KEYS.AUTH, users);
-            }
-
-            localStorage.removeItem(`mock_otp_${payload.email}`);
-            return { data: { message: 'Password has been safely reset.' } };
+        // --- OTP AUTH: Call REAL backend (OTP sent via Gmail, never shown on frontend) ---
+        if (endpoint === '/auth/send-otp' || endpoint === '/auth/verify-otp' || endpoint === '/auth/reset-password') {
+            const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+            const res = await fetch(`${backendUrl}/api${endpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok) throw { response: { status: res.status, data } };
+            return { data };
         }
         // -----------------------------------------------------------
 

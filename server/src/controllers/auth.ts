@@ -175,10 +175,23 @@ export const sendOtp = async (req: Request, res: Response) => {
         };
 
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from: `"EditPro Studio" <${process.env.EMAIL_USER}>`,
             to: email,
-            subject: 'Password Reset OTP - EditPro',
-            text: `Hello,\n\nYour OTP for password reset is: ${otp}\nThis OTP will expire in 5 minutes.\n\nIf you did not request this, please ignore this email.`
+            subject: 'EditPro Password Reset OTP',
+            html: `
+                <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #0f172a; border-radius: 16px; color: #e2e8f0;">
+                    <h1 style="font-size: 24px; font-weight: 800; color: #818cf8; margin: 0 0 8px 0;">EditPro Studio</h1>
+                    <p style="color: #94a3b8; font-size: 13px; margin: 0 0 24px 0;">Password Recovery Request</p>
+                    <hr style="border: none; border-top: 1px solid #1e293b; margin: 0 0 24px 0;">
+                    <p style="margin: 0 0 16px 0; line-height: 1.6;">Hello,</p>
+                    <p style="margin: 0 0 24px 0; line-height: 1.6;">Your password reset OTP is:</p>
+                    <div style="text-align: center; background: #1e293b; border-radius: 12px; padding: 24px; margin: 0 0 24px 0;">
+                        <span style="font-size: 36px; font-weight: 900; letter-spacing: 8px; color: #818cf8;">${otp}</span>
+                    </div>
+                    <p style="margin: 0 0 8px 0; color: #f59e0b; font-size: 13px; font-weight: 600;">⏱ This code will expire in 5 minutes.</p>
+                    <p style="margin: 0; color: #64748b; font-size: 12px; line-height: 1.5;">If you did not request this reset, please ignore this email. Your account remains secure.</p>
+                </div>
+            `
         };
 
         await transporter.sendMail(mailOptions);
