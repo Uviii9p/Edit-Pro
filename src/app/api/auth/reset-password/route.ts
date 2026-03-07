@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import { prisma } from '../../../../lib/prisma';
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-for-otp';
+import { prisma } from '@/lib/prisma';
+import { JWT_SECRET } from '@/lib/constants';
 
 export async function POST(req: Request) {
     try {

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-for-otp';
+import { JWT_SECRET } from '@/lib/constants';
 
 export async function POST(req: Request) {
     try {
