@@ -363,6 +363,18 @@ const api = {
             const data = await res.json();
             if (!res.ok) throw { response: { status: res.status, data } };
 
+            // --- LOCAL PASSWORD UPDATE ---
+            // Since this app uses localStorage as its primary DB, we update the user record here
+            // after the backend has securely verified the session.
+            if (endpoint === '/auth/reset-password' && data.success) {
+                const users = getFromStorage(STORAGE_KEYS.AUTH, []);
+                const userIndex = users.findIndex((u: any) => u.email === payload.email);
+                if (userIndex !== -1) {
+                    users[userIndex].password = payload.newPassword;
+                    setToStorage(STORAGE_KEYS.AUTH, users);
+                }
+            }
+
             // Pass the tokens back up to the caller
             return { data };
         }

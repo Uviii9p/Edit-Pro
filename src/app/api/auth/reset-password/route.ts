@@ -24,17 +24,14 @@ export async function POST(req: Request) {
                 return NextResponse.json({ message: 'Invalid session.' }, { status: 403 });
             }
 
-            // Hash the new password
-            const salt = await bcrypt.genSalt(12);
-            const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-            // Update in DB (SQLite on dev, could be anything in prod)
-            await prisma.user.update({
-                where: { email },
-                data: { password: hashedPassword }
+            // In a production app with a real database (like Supabase/Postgres), 
+            // you would update the password here. 
+            // Since this app uses localStorage as its primary "database" (mock mode),
+            // we'll just return success and let the frontend update the local record.
+            return NextResponse.json({
+                message: 'Session verified! Updating your local account...',
+                success: true
             });
-
-            return NextResponse.json({ message: 'Password reset successfully! You can now log in.' });
 
         } catch (err: any) {
             console.error('[RESET-PASSWORD] JWT Verify Error:', err.name, err.message);
