@@ -13,7 +13,7 @@ export default function ClientLayout({
 }) {
     const pathname = usePathname();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const isAuthPage = ['/login', '/register'].includes(pathname);
+    const isAuthPage = ['/login', '/register', '/forgot-password'].includes(pathname);
 
     // Close sidebar when route changes
     useEffect(() => {

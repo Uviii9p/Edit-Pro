@@ -27,7 +27,7 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
     const pathname = usePathname();
     const logout = useAuthStore((state) => state.logout);
 
-    if (['/login', '/register'].includes(pathname)) return null;
+    if (['/login', '/register', '/forgot-password'].includes(pathname)) return null;
 
     return (
         <aside className="h-full w-64 glass-panel border-r border-slate-800/50 flex flex-col p-6 space-y-8">
