@@ -21,6 +21,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     logout: () => {
         localStorage.removeItem('token');
         set({ user: null, token: null, isAuthenticated: false });
+        if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+        }
     },
     fetchProfile: async () => {
         try {
