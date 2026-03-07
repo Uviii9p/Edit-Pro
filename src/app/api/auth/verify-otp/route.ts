@@ -1,13 +1,5 @@
 import { NextResponse } from 'next/server';
-
-let otps: Record<string, { otp: string, expiresAt: number, attempts: number, lastSent: number, verified: boolean }> = {};
-
-if (process.env.NODE_ENV !== 'production') {
-    if (!(global as any).otps) {
-        (global as any).otps = {};
-    }
-    otps = (global as any).otps;
-}
+import otps from '@/lib/otp-store';
 
 export async function POST(req: Request) {
     try {
