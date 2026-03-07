@@ -363,7 +363,7 @@ const api = {
             setToStorage(`mock_otp_${payload.email}`, { otp, expiresAt: Date.now() + 5 * 60000, verified: false });
 
             // For a fully functional Vercel demo, we pass the OTP straight back in the success message!
-            return { data: { message: `Demo OTP: ${otp} (Copied!)` } };
+            return { data: { message: `Your OTP code is: ${otp}`, demoOtp: otp } };
         }
 
         if (endpoint === '/auth/verify-otp') {

@@ -27,10 +27,13 @@ export default function ForgotPasswordPage() {
         try {
             const res = await api.post('/auth/send-otp', { email });
             setSuccess(res.data.message || 'OTP Sent successfully!');
+            // Auto-fill the OTP if demo mode returns it
+            if (res.data.demoOtp) {
+                setOtp(res.data.demoOtp);
+            }
             setTimeout(() => {
-                setSuccess('');
                 setStep(2);
-            }, 1000);
+            }, 3000);
         } catch (err: any) {
             setError(err.response?.data?.message || 'Failed to send OTP');
         } finally {

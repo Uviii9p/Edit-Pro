@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const token = localStorage.getItem('token');
         if (token) {
             fetchProfile();
-        } else if (pathname !== '/login' && pathname !== '/register') {
+        } else if (pathname !== '/login' && pathname !== '/register' && pathname !== '/forgot-password') {
             router.push('/login');
         }
     }, [fetchProfile, pathname, router]);
