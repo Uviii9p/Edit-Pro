@@ -194,11 +194,27 @@ export const sendOtp = async (req: Request, res: Response) => {
             `
         };
 
-        await transporter.sendMail(mailOptions);
-        res.json({ message: 'OTP securely dispatched to your email address.' });
+        // Check if Gmail is configured
+        const isConfigured = process.env.EMAIL_USER && process.env.EMAIL_USER !== 'your-email@gmail.com' && process.env.EMAIL_PASS && process.env.EMAIL_PASS !== 'your-app-password';
+
+        if (isConfigured) {
+            await transporter.sendMail(mailOptions);
+            console.log(`[AUTH] OTP sent via Email to: ${email}`);
+            res.json({ message: 'OTP securely dispatched to your email address.' });
+        } else {
+            // DEV MODE: Log OTP to console if credentials are missing
+            console.log(`\n==========================================`);
+            console.log(`[DEV MODE] GMAIL NOT CONFIGURED`);
+            console.log(`OTP for ${email} is: ${otp}`);
+            console.log(`==========================================\n`);
+            res.json({
+                message: 'OTP Sent (Dev Mode)! Check your server terminal/console for the 6-digit code.',
+                isDev: true
+            });
+        }
     } catch (err: any) {
         console.error("[AUTH] Nodemailer Error:", err);
-        res.status(500).json({ message: 'Failed to send OTP email.' });
+        res.status(500).json({ message: 'Failed to send OTP email. Make sure your Gmail App Password is correct.' });
     }
 };
 
