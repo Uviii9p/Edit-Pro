@@ -52,8 +52,7 @@ export async function POST(req: Request) {
             // DEV FALLBACK
             console.log(`\n[VERCEL OTP DEV] Code for ${email}: ${otp}\n`);
             return NextResponse.json({
-                message: 'OTP Sent (Dev Mode)! Since Gmail is not configured, check the Vercel Logs or server terminal for the code.',
-                devOtp: otp // Show it in dev mode response so they can test easily
+                message: 'OTP Sent! Please check your email inbox.'
             });
         }
     } catch (error) {
