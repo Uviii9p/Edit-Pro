@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify OTP — EditPro</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="auth-card">
+        <a href="forgot-password.html" class="back-link">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5" />
+                <path d="m12 19-7-7 7-7" />
+            </svg>
+            Change Email
+        </a>
+
+        <div class="brand">
+            <h1>Enter OTP</h1>
+            <p>We've sent a 6-digit code to your email.<br>Please check your inbox and enter it below.</p>
+        </div>
+
+        <div class="steps">
+            <div class="step-dot done"></div>
+            <div class="step-dot active"></div>
+            <div class="step-dot"></div>
+        </div>
+
+        <div id="msg" class="msg"></div>
+
+        <form onsubmit="handleVerifyOtp(event)">
+            <div class="field">
+                <label>6-Digit Secure Code</label>
+                <div class="input-wrap">
+                    <input type="text" id="otp" class="otp-input" placeholder="••••••" maxlength="6" inputmode="numeric"
+                        pattern="[0-9]*" required autocomplete="one-time-code">
+                </div>
+            </div>
+            <button type="submit" id="submitBtn" class="btn-primary">Verify Code</button>
+        </form>
+
+        <div class="resend-wrap">
+            <button id="resendBtn" class="resend-btn" disabled>Resend OTP</button>
+            <div id="cooldownTimer" class="timer-badge">Resend available in 30s</div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Check session and start cooldown on page load
+        if (!sessionStorage.getItem('reset_email')) {
+            window.location.href = 'forgot-password.html';
+        }
+        document.addEventListener('DOMContentLoaded', initResendCooldown);
+    </script>
+</body>
+
+</html>
