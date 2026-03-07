@@ -316,7 +316,20 @@ const api = {
 
         const key = Object.keys(keyMap).find(k => endpoint.startsWith(k));
         if (key) {
-            const data = getFromStorage(keyMap[key]);
+            let data = getFromStorage(keyMap[key]);
+
+            // RELATIONAL ENRICHMENT: Automatically join related entities for specific routes
+            if (endpoint === '/invoices') {
+                const projects = getFromStorage(STORAGE_KEYS.PROJECTS, []);
+                data = data.map((inv: any) => ({
+                    ...inv,
+                    project: projects.find((p: any) => p.id === inv.projectId) || null
+                }));
+            }
+
+            if (endpoint.startsWith('/projects') && endpoint !== '/projects') {
+                // Single project might need enrichment too
+            }
 
             // Handle /[route]/[id]
             if (endpoint !== key) {

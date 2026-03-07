@@ -5,7 +5,8 @@ import api from '@/lib/api';
 import {
     Plus, Search, Download, Edit2,
     Trash2, CreditCard, IndianRupee,
-    FileText, TrendingUp, Clock, X, CheckCircle, Building2
+    FileText, TrendingUp, Clock, X, CheckCircle, Building2,
+    Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -48,6 +49,7 @@ export default function InvoicesPage() {
     const [searchQuery, setSearchQuery] = useState('');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [pdfInvoice, setPdfInvoice] = useState<any>(null);
+    const [isProcessing, setIsProcessing] = useState(false);
     const invoiceRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -131,24 +133,46 @@ export default function InvoicesPage() {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const downloadPDF = async (invoice: any) => {
+        if (isProcessing) return;
+        setIsProcessing(true);
         try {
             setPdfInvoice(invoice);
-            await new Promise(r => setTimeout(r, 800));
-            if (!invoiceRef.current) return;
+            // Give React enough time to render the hidden template completely
+            await new Promise(r => setTimeout(r, 1000));
+
+            if (!invoiceRef.current) {
+                throw new Error("Canvas reference missing");
+            }
+
             const html2pdfModule = await import('html2pdf.js');
             const html2pdf = html2pdfModule.default || html2pdfModule;
+
             const opt = {
                 margin: 0,
                 filename: `Invoice-${invoice.invoiceNumber}.pdf`,
                 image: { type: 'jpeg' as const, quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, letterRendering: true, windowWidth: 800 },
-                jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    letterRendering: true,
+                    windowWidth: 1200, // Higher width for better layout fidelity
+                    logging: false
+                },
+                jsPDF: {
+                    unit: 'mm' as const,
+                    format: 'a4' as const,
+                    orientation: 'portrait' as const
+                }
             };
+
+            // Execute PDF generation and wait for save
             await html2pdf().from(invoiceRef.current).set(opt).save();
         } catch (err) {
-            console.error(err);
+            console.error("PDF Generation Error:", err);
+            alert("Failed to generate PDF. Check browser console for details.");
         } finally {
             setPdfInvoice(null);
+            setIsProcessing(false);
         }
     };
 
@@ -538,83 +562,148 @@ export default function InvoicesPage() {
                 )}
             </AnimatePresence>
 
-            {/* Hidden PDF Template */}
-            <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
-                <div ref={invoiceRef} style={{ width: '210mm', minHeight: '297mm', backgroundColor: '#ffffff', color: '#1e293b', padding: '15mm', boxSizing: 'border-box' }}>
-                    {pdfInvoice && (
-                        <div className="space-y-8">
-                            <div className="flex justify-between items-start border-b-2 border-slate-100 pb-8">
-                                <div>
-                                    <h1 className="text-3xl font-black text-slate-900 mb-1">{editorDetails.companyName}</h1>
-                                    <p className="text-sm text-slate-500 font-bold">{editorDetails.website}</p>
-                                    <p className="text-xs text-slate-400 mt-2 max-w-[250px]">{editorDetails.address}</p>
+            {/* Loading Overlay */}
+            <AnimatePresence>
+                {isProcessing && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[200] flex flex-col items-center justify-center gap-4"
+                    >
+                        <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
+                        <div className="text-center">
+                            <h3 className="text-xl font-black text-white tracking-tight">Generating Studio Export</h3>
+                            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">Please wait while we prepare your document...</p>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Hidden PDF Canvas - Improved Stability */}
+            <div style={{ position: 'fixed', left: '-10000px', top: '-10000px', zIndex: -1 }}>
+                <div
+                    ref={invoiceRef}
+                    style={{
+                        width: '210mm',
+                        minHeight: '297mm',
+                        backgroundColor: '#ffffff',
+                        color: '#1e293b',
+                        padding: '20mm',
+                        boxSizing: 'border-box',
+                        fontFamily: 'sans-serif'
+                    }}
+                >
+                    {pdfInvoice ? (
+                        <div className="space-y-10">
+                            {/* PDF Content (restored and improved) */}
+                            <div className="flex justify-between items-start border-b-4 border-slate-900 pb-10">
+                                <div className="space-y-2">
+                                    <h1 className="text-4xl font-black text-slate-900 leading-tight">{editorDetails.companyName}</h1>
+                                    <div className="space-y-1">
+                                        <p className="text-sm text-slate-600 font-bold">{editorDetails.website}</p>
+                                        <p className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Studio Manager Identity</p>
+                                    </div>
+                                    <p className="text-xs text-slate-500 mt-4 max-w-[300px] leading-relaxed font-medium">{editorDetails.address}</p>
                                 </div>
                                 <div className="text-right">
-                                    <h2 className="text-4xl font-black text-slate-200 uppercase tracking-tighter">INVOICE</h2>
-                                    <p className="text-lg font-black text-slate-900 mt-2">#{pdfInvoice.invoiceNumber}</p>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">Date: {new Date(pdfInvoice.createdAt).toLocaleDateString()}</p>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-12 py-8">
-                                <div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Bill To</p>
-                                    <h3 className="text-xl font-black text-slate-900 mb-1">{pdfInvoice.project?.clientName || 'Valued Client'}</h3>
-                                    <p className="text-sm text-slate-500 font-bold">{pdfInvoice.project?.clientEmail || 'client@example.com'}</p>
-                                    <p className="text-xs text-slate-400 mt-2">{pdfInvoice.project?.clientAddress || 'Client Location unavailable'}</p>
-                                </div>
-                                <div className="bg-slate-50 p-6 rounded-3xl">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Payment Info</p>
-                                    <div className="space-y-2">
-                                        <p className="text-xs font-bold text-slate-600">Bank: <span className="text-slate-900">{editorDetails.bankName}</span></p>
-                                        <p className="text-xs font-bold text-slate-600">A/C: <span className="text-slate-900 font-mono">{editorDetails.accountNo}</span></p>
-                                        <p className="text-xs font-bold text-slate-600">IFSC: <span className="text-slate-900 font-mono uppercase">{editorDetails.ifsc}</span></p>
-                                        <p className="text-xs font-bold text-slate-600">UPI: <span className="text-slate-900 font-mono">{editorDetails.upi}</span></p>
+                                    <div className="bg-slate-900 text-white px-6 py-2 rounded-xl inline-block mb-4">
+                                        <h2 className="text-2xl font-black uppercase tracking-tighter">INVOICE</h2>
+                                    </div>
+                                    <p className="text-xl font-black text-slate-900">#{pdfInvoice.invoiceNumber}</p>
+                                    <div className="mt-2">
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Issued On</p>
+                                        <p className="text-sm font-bold text-slate-700">{new Date(pdfInvoice.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="mt-8">
-                                <table className="w-full text-left">
+                            <div className="grid grid-cols-2 gap-16 py-8">
+                                <div className="space-y-4">
+                                    <div>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Bill To</p>
+                                        <h3 className="text-2xl font-black text-slate-900 mb-1">{pdfInvoice.project?.clientName || 'Valued Client'}</h3>
+                                        <p className="text-sm text-slate-600 font-bold">{pdfInvoice.project?.clientEmail || 'client@example.com'}</p>
+                                    </div>
+                                    <div className="pt-2">
+                                        <p className="text-xs text-slate-500 font-medium leading-relaxed">{pdfInvoice.project?.clientAddress || 'Client Location unavailable'}</p>
+                                    </div>
+                                </div>
+                                <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Settlement Info</p>
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center text-xs border-b border-slate-200 pb-2">
+                                            <span className="font-bold text-slate-500">Bank</span>
+                                            <span className="font-black text-slate-900">{editorDetails.bankName}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-xs border-b border-slate-200 pb-2">
+                                            <span className="font-bold text-slate-500">Account</span>
+                                            <span className="font-black text-slate-900 font-mono">{editorDetails.accountNo}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-xs border-b border-slate-200 pb-2">
+                                            <span className="font-bold text-slate-500">IFSC</span>
+                                            <span className="font-black text-slate-900 font-mono uppercase">{editorDetails.ifsc}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-xs">
+                                            <span className="font-bold text-slate-500">UPI ID</span>
+                                            <span className="font-black text-blue-600 font-mono">{editorDetails.upi}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-6">
+                                <table className="w-full">
                                     <thead>
-                                        <tr className="bg-slate-900 text-white">
-                                            <th className="px-6 py-4 rounded-l-2xl text-[10px] font-black uppercase tracking-widest">Description</th>
-                                            <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-right">Amount</th>
+                                        <tr className="border-b-2 border-slate-900">
+                                            <th className="py-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Services Description</th>
+                                            <th className="py-4 text-[10px] font-black uppercase tracking-widest text-slate-400 text-right">Amount (INR)</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
                                         <tr>
-                                            <td className="px-6 py-8">
-                                                <p className="text-sm font-black text-slate-900">{pdfInvoice.project?.name || 'Professional Services'}</p>
-                                                <p className="text-xs text-slate-400 mt-1 font-bold italic">Consultation and digital media services provided.</p>
+                                            <td className="py-10">
+                                                <p className="text-lg font-black text-slate-900">{pdfInvoice.project?.name || 'Professional Services'}</p>
+                                                <p className="text-xs text-slate-500 mt-2 font-medium italic border-l-2 border-slate-200 pl-4">Digital media creation, post-production services and technical consultation provided for the specified project duration.</p>
                                             </td>
-                                            <td className="px-6 py-8 text-right font-black text-slate-900">₹{pdfInvoice.amount?.toLocaleString()}</td>
+                                            <td className="py-10 text-right">
+                                                <p className="text-xl font-black text-slate-900">₹{pdfInvoice.amount?.toLocaleString()}</p>
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
 
-                            <div className="flex justify-end mt-12 pt-8 border-t-2 border-slate-100">
-                                <div className="w-64 space-y-3">
-                                    <div className="flex justify-between text-sm font-bold text-slate-500">
+                            <div className="flex justify-end mt-12 bg-slate-50 p-10 rounded-[3rem]">
+                                <div className="w-80 space-y-4">
+                                    <div className="flex justify-between text-xs font-bold text-slate-500 uppercase tracking-widest">
                                         <span>Subtotal</span>
-                                        <span>₹{pdfInvoice.amount?.toLocaleString()}</span>
+                                        <span className="text-slate-900">₹{pdfInvoice.amount?.toLocaleString()}</span>
                                     </div>
-                                    <div className="flex justify-between text-sm font-bold text-slate-500">
-                                        <span>Tax ({pdfInvoice.taxRate}%)</span>
-                                        <span>₹{pdfInvoice.tax?.toLocaleString()}</span>
+                                    <div className="flex justify-between text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200 pb-4">
+                                        <span>GST ({pdfInvoice.taxRate}%)</span>
+                                        <span className="text-slate-900">₹{pdfInvoice.tax?.toLocaleString()}</span>
                                     </div>
-                                    <div className="flex justify-between items-center bg-slate-900 p-5 rounded-2xl text-white mt-4">
-                                        <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Total Amount</span>
-                                        <span className="text-2xl font-black">₹{((pdfInvoice.amount || 0) + (pdfInvoice.tax || 0)).toLocaleString()}</span>
+                                    <div className="flex justify-between items-center pt-2">
+                                        <div className="space-y-1">
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block underline decoration-blue-500 decoration-4">Grand Total</span>
+                                            <p className="text-[8px] font-bold text-slate-400 italic">Inclusive of all taxes</p>
+                                        </div>
+                                        <span className="text-4xl font-black text-slate-900 leading-none">₹{((pdfInvoice.amount || 0) + (pdfInvoice.tax || 0)).toLocaleString()}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="mt-20 pt-12 border-t border-slate-100 text-center">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Thank you for your business</p>
-                                <p className="text-[8px] text-slate-300 font-bold">This is a system generated invoice. Generated via EditPro Studio Manager.</p>
+                            <div className="mt-auto pt-24 text-center">
+                                <div className="border-t-2 border-slate-100 pt-8 inline-block px-12">
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-2">Authenticated Studio Document</p>
+                                    <p className="text-[8px] text-slate-300 font-bold max-w-xs mx-auto">This document is electronically generated by EditPro Studio Manager. No physical signature is required for validity. 2026 Studio Operations.</p>
+                                </div>
                             </div>
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-center min-h-[297mm]">
+                            <p className="text-slate-400 italic font-medium">Initializing rendering engine...</p>
                         </div>
                     )}
                 </div>
