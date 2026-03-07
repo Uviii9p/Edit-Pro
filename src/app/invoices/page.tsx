@@ -155,8 +155,7 @@ export default function InvoicesPage() {
                     scale: 2,
                     useCORS: true,
                     letterRendering: true,
-                    windowWidth: 1200, // Higher width for better layout fidelity
-                    logging: false
+                    windowWidth: 800
                 },
                 jsPDF: {
                     unit: 'mm' as const,
@@ -167,9 +166,9 @@ export default function InvoicesPage() {
 
             // Execute PDF generation and wait for save
             await html2pdf().from(invoiceRef.current).set(opt).save();
-        } catch (err) {
+        } catch (err: any) {
             console.error("PDF Generation Error:", err);
-            alert("Failed to generate PDF. Check browser console for details.");
+            alert("Failed to generate PDF: " + (err.message || err.toString()));
         } finally {
             setPdfInvoice(null);
             setIsProcessing(false);
@@ -581,7 +580,7 @@ export default function InvoicesPage() {
             </AnimatePresence>
 
             {/* Hidden PDF Canvas - Improved Stability */}
-            <div style={{ position: 'fixed', left: '-10000px', top: '-10000px', zIndex: -1 }}>
+            <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
                 <div
                     ref={invoiceRef}
                     style={{
