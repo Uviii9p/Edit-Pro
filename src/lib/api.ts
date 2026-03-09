@@ -353,30 +353,39 @@ const api = {
         if (endpoint === '/auth/login') return api.auth.login(payload.email, payload.password);
         if (endpoint === '/auth/register') return api.auth.register(payload);
 
-        // --- OTP AUTH: Stateless JWT Flow (Perfect for Vercel) ---
-        if (endpoint === '/auth/send-otp' || endpoint === '/auth/verify-otp' || endpoint === '/auth/reset-password') {
-            const res = await fetch(`/api${endpoint}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const data = await res.json();
-            if (!res.ok) throw { response: { status: res.status, data } };
+        // --- LOCAL DEVICE AUTH: Purely client-side (No backend required) ---
+        if (endpoint === '/auth/send-otp') {
+            const users = getFromStorage(STORAGE_KEYS.AUTH, []);
+            const user = users.find((u: any) => u.email === payload.email);
+            if (!user) throw { response: { status: 404, data: { message: 'Identity not found' } } };
 
-            // --- LOCAL PASSWORD UPDATE ---
-            // Since this app uses localStorage as its primary DB, we update the user record here
-            // after the backend has securely verified the session.
-            if (endpoint === '/auth/reset-password' && data.success) {
-                const users = getFromStorage(STORAGE_KEYS.AUTH, []);
-                const userIndex = users.findIndex((u: any) => u.email === payload.email);
-                if (userIndex !== -1) {
-                    users[userIndex].password = payload.newPassword;
-                    setToStorage(STORAGE_KEYS.AUTH, users);
-                }
+            const otp = Math.floor(100000 + Math.random() * 900000).toString();
+            console.log(`[DEVICE AUTH] Local OTP for ${payload.email}: ${otp}`);
+
+            // Store OTP in device storage for local verification
+            localStorage.setItem(`otp_${payload.email}`, otp);
+
+            return { data: { success: true, message: 'OTP Generated on Device', devOtp: otp } };
+        }
+
+        if (endpoint === '/auth/verify-otp') {
+            const storedOtp = localStorage.getItem(`otp_${payload.email}`);
+            if (storedOtp === payload.otp) {
+                return { data: { success: true, message: 'Device Storage Verified' } };
             }
+            throw { response: { status: 401, data: { message: 'Invalid Device Code' } } };
+        }
 
-            // Pass the tokens back up to the caller
-            return { data };
+        if (endpoint === '/auth/reset-password') {
+            const users = getFromStorage(STORAGE_KEYS.AUTH, []);
+            const userIndex = users.findIndex((u: any) => u.email === payload.email);
+            if (userIndex !== -1) {
+                users[userIndex].password = payload.newPassword;
+                setToStorage(STORAGE_KEYS.AUTH, users);
+                localStorage.removeItem(`otp_${payload.email}`);
+                return { data: { success: true, message: 'Password Updated on Device' } };
+            }
+            throw { response: { status: 404 } };
         }
         // -----------------------------------------------------------
 
