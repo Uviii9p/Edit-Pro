@@ -24,6 +24,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addDays, parseISO, startOfDay, addHours } from 'date-fns';
+import { useNotifications } from '@/hooks/useNotifications';
 
 type EventType = 'SHOOT' | 'EDIT' | 'MEETING' | 'GRADING' | 'DEADLINE' | 'RENDER' | 'OTHER';
 
@@ -64,6 +65,7 @@ const EVENT_TYPE_STYLES: Record<EventType, { color: string; bg: string; border: 
 };
 
 export default function CalendarPage() {
+    const { notify } = useNotifications();
     // State
     const [currentDate, setCurrentDate] = useState(new Date());
     const [view, setView] = useState<'MONTH' | 'WEEK' | 'DAY'>('MONTH');
@@ -234,6 +236,7 @@ export default function CalendarPage() {
                 status: 'PENDING',
                 priority: 'HIGH'
             });
+            notify('Reservation Locked', `${bookingData.studioName} confirmed for ${bookingData.editorName}.`, 'success');
             fetchData();
         } catch (err) {
             console.error('Booking failed', err);

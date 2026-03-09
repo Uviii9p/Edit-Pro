@@ -10,9 +10,11 @@ import {
     Database, Download, Upload, Server, ShieldCheck, History
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useNotifications } from '@/hooks/useNotifications';
 
 export default function SettingsPage() {
     const { user, fetchProfile, logout } = useAuthStore();
+    const { notify, permission, requestPermission } = useNotifications();
     const [activeTab, setActiveTab] = useState('profile');
     const [success, setSuccess] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -325,24 +327,55 @@ export default function SettingsPage() {
                     )}
 
                     {activeTab === 'notifications' && (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-                            <h3 className="text-lg font-bold">Notification Preferences</h3>
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-xl font-bold">Priority Alerts</h3>
+                                <div className="flex items-center gap-3">
+                                    <span className={`text-[10px] font-black uppercase tracking-widest ${permission === 'granted' ? 'text-emerald-500' : 'text-slate-500'}`}>
+                                        Device Auth: {permission}
+                                    </span>
+                                    {permission !== 'granted' && (
+                                        <button
+                                            onClick={requestPermission}
+                                            className="text-[10px] font-black uppercase bg-blue-600 px-3 py-1 rounded-lg"
+                                        >
+                                            Enable
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
                             <div className="space-y-4">
                                 {[
-                                    { label: 'Project Deadlines', desc: 'Notify when a project is due in 24 hours' },
-                                    { label: 'Client Messages', desc: 'Instant alert when a client sends a message' },
-                                    { label: 'Studio Bookings', desc: 'Confirmation emails for slotted studio time' },
+                                    { label: 'Project Deadlines', desc: 'Notify when a project is due in 24 hours', id: 'deadlines' },
+                                    { label: 'Client Messages', desc: 'Instant alert when a client sends a message', id: 'messages' },
+                                    { label: 'Studio Bookings', desc: 'Confirmation emails for slotted studio time', id: 'bookings' },
                                 ].map(pref => (
-                                    <div key={pref.label} className="flex justify-between items-center p-4 bg-slate-800 rounded-2xl border border-slate-700 hover:border-slate-600 transition-all">
-                                        <div>
-                                            <p className="font-bold text-sm">{pref.label}</p>
-                                            <p className="text-xs text-slate-500">{pref.desc}</p>
+                                    <div
+                                        key={pref.id}
+                                        className="flex justify-between items-center p-5 bg-slate-800 rounded-[2rem] border border-slate-700/50 hover:border-blue-500/30 transition-all cursor-pointer group"
+                                        onClick={() => notify('Preference Updated', `${pref.label} notifications enabled.`, 'info')}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="p-3 bg-slate-900 rounded-2xl group-hover:scale-110 transition-transform">
+                                                <Bell size={18} className="text-slate-400" />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-sm text-slate-200">{pref.label}</p>
+                                                <p className="text-[10px] text-slate-500 font-medium">{pref.desc}</p>
+                                            </div>
                                         </div>
-                                        <div className="w-12 h-6 bg-blue-600 rounded-full flex items-center px-1">
-                                            <div className="w-4 h-4 bg-white rounded-full ml-auto" />
+                                        <div className="w-12 h-6 bg-blue-600 rounded-full flex items-center px-1 shadow-inner">
+                                            <div className="w-4 h-4 bg-white rounded-full ml-auto shadow-md" />
                                         </div>
                                     </div>
                                 ))}
+                            </div>
+
+                            <div className="p-6 bg-blue-600/5 border border-blue-500/20 rounded-3xl">
+                                <p className="text-xs text-slate-400 italic leading-relaxed text-center">
+                                    "Notifications bridge the gap between studio and device. We'll ensure you're always synced with your production schedule."
+                                </p>
                             </div>
                         </motion.div>
                     )}

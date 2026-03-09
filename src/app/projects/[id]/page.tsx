@@ -13,6 +13,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useNotifications } from '@/hooks/useNotifications';
 
 interface ProjectDetail {
     id: string;
@@ -38,6 +39,7 @@ export default function ProjectDetailPage() {
     const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'timeline' | 'team'>('overview');
     const [comment, setComment] = useState('');
     const user = useAuthStore((state: any) => state.user);
+    const { notify } = useNotifications();
     const commentEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -66,6 +68,7 @@ export default function ProjectDetailPage() {
         if (!comment.trim()) return;
         try {
             await api.post(`/projects/${id}/comments`, { content: comment });
+            notify('Message Sent', 'Your message has been posted to the studio floor.', 'success');
             setComment('');
             fetchProject();
         } catch (err) {
