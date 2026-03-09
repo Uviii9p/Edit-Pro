@@ -243,10 +243,16 @@ export default function SettingsPage() {
                                                 const file = e.target.files?.[0];
                                                 if (file) {
                                                     const reader = new FileReader();
-                                                    reader.onload = (ev) => {
+                                                    reader.onload = async (ev) => {
                                                         const content = ev.target?.result as string;
-                                                        if (confirm('WARNING: This will overwrite CURRENT studio data. Continue?')) {
-                                                            (api as any).utils.importAppData(content);
+                                                        if (confirm('CRITICAL: This will overwrite CURRENT studio data. Continue?')) {
+                                                            const success = (api as any).utils.importAppData(content);
+                                                            if (success) {
+                                                                notify('Vault Restored', 'Your studio data has been successfully imported.', 'success');
+                                                                setTimeout(() => window.location.reload(), 1500);
+                                                            } else {
+                                                                notify('Import Failed', 'The data vault file is corrupted or incompatible.', 'error');
+                                                            }
                                                         }
                                                     };
                                                     reader.readAsText(file);

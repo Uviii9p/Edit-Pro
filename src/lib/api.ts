@@ -551,28 +551,72 @@ const api = {
      */
     utils: {
         exportAppData: () => {
-            const data: Record<string, any> = {};
+            const vault: Record<string, any> = {
+                metadata: {
+                    appName: 'EditPro Studio',
+                    exportDate: new Date().toISOString(),
+                    version: '1.2.0',
+                    platform: typeof navigator !== 'undefined' ? navigator.platform : 'web'
+                },
+                storage: {}
+            };
+
+            // Capture all keys defined in STORAGE_KEYS
             Object.values(STORAGE_KEYS).forEach(key => {
-                data[key] = localStorage.getItem(key);
+                const val = localStorage.getItem(key);
+                if (val) vault.storage[key] = val;
             });
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+
+            // Capture session token
+            const token = localStorage.getItem('token');
+            if (token) vault.storage['token'] = token;
+
+            const blob = new Blob([JSON.stringify(vault, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+
             a.href = url;
-            a.download = `editpro-studio-vault-${new Date().toISOString().split('T')[0]}.json`;
+            a.download = `editpro-studio-vault-${timestamp}.json`;
             a.click();
-            URL.revokeObjectURL(url);
+
+            setTimeout(() => {
+                URL.revokeObjectURL(url);
+                a.remove();
+            }, 100);
         },
+
         importAppData: (fileContents: string) => {
             try {
-                const data = JSON.parse(fileContents);
-                Object.keys(data).forEach(key => {
-                    if (data[key]) localStorage.setItem(key, data[key]);
+                const vault = JSON.parse(fileContents);
+
+                // Integrity Check
+                if (!vault.storage || (!vault.metadata && !vault.editpro_auth)) {
+                    throw new Error('Incompatible archive format');
+                }
+
+                // Support both old flat format and new structured format
+                const storageData = vault.storage || vault;
+
+                // Clear current storage to prevent ghost data
+                const currentKeys = Object.keys(localStorage);
+                currentKeys.forEach(k => {
+                    if (k.startsWith('editpro_') || k === 'token') {
+                        localStorage.removeItem(k);
+                    }
                 });
-                window.location.reload();
+
+                // Import new data
+                Object.keys(storageData).forEach(key => {
+                    if (storageData[key] && (key.startsWith('editpro_') || key === 'token')) {
+                        localStorage.setItem(key, storageData[key]);
+                    }
+                });
+
+                return true;
             } catch (err) {
-                console.error('Data corrupted:', err);
-                alert('CRITICAL: Incompatible or Corrupted Archive!');
+                console.error('Vault Error:', err);
+                return false;
             }
         }
     }
