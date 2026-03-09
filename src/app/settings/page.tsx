@@ -216,7 +216,7 @@ export default function SettingsPage() {
                                             </div>
                                             <div className="text-left">
                                                 <p className="font-bold text-sm">Download Backup</p>
-                                                <p className="text-[10px] text-slate-500">Save complete state to .json</p>
+                                                <p className="text-[10px] text-slate-500">Save state to .studio vault</p>
                                             </div>
                                         </div>
                                     </button>
@@ -231,14 +231,14 @@ export default function SettingsPage() {
                                             </div>
                                             <div className="text-left">
                                                 <p className="font-bold text-sm">Restore Data</p>
-                                                <p className="text-[10px] text-slate-500">Import from .json vault</p>
+                                                <p className="text-[10px] text-slate-500">Import .studio files</p>
                                             </div>
                                         </div>
                                         <input
                                             type="file"
                                             ref={backupInputRef}
                                             className="hidden"
-                                            accept=".json"
+                                            accept=".studio,.json"
                                             onChange={(e) => {
                                                 const file = e.target.files?.[0];
                                                 if (file) {

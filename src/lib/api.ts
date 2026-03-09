@@ -561,10 +561,17 @@ const api = {
                 storage: {}
             };
 
-            // Capture all keys defined in STORAGE_KEYS
+            // Capture all keys defined in STORAGE_KEYS and parse them to avoid "double-stringification"
             Object.values(STORAGE_KEYS).forEach(key => {
                 const val = localStorage.getItem(key);
-                if (val) vault.storage[key] = val;
+                if (val) {
+                    try {
+                        // We parse it first so the exported file contains actual data structures, not escaped strings
+                        vault.storage[key] = JSON.parse(val);
+                    } catch {
+                        vault.storage[key] = val;
+                    }
+                }
             });
 
             // Capture session token
@@ -574,10 +581,10 @@ const api = {
             const blob = new Blob([JSON.stringify(vault, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 10);
 
             a.href = url;
-            a.download = `editpro-studio-vault-${timestamp}.json`;
+            a.download = `editpro-vault-${timestamp}.studio`; // Unique signature format
             a.click();
 
             setTimeout(() => {
@@ -591,31 +598,29 @@ const api = {
                 const vault = JSON.parse(fileContents);
 
                 // Integrity Check
-                if (!vault.storage || (!vault.metadata && !vault.editpro_auth)) {
-                    throw new Error('Incompatible archive format');
+                if (!vault.storage && !vault.editpro_auth) {
+                    throw new Error('Invalid vault signature');
                 }
 
-                // Support both old flat format and new structured format
                 const storageData = vault.storage || vault;
 
-                // Clear current storage to prevent ghost data
-                const currentKeys = Object.keys(localStorage);
-                currentKeys.forEach(k => {
-                    if (k.startsWith('editpro_') || k === 'token') {
-                        localStorage.removeItem(k);
-                    }
+                // Clear and Import
+                Object.keys(localStorage).forEach(k => {
+                    if (k.startsWith('editpro_') || k === 'token') localStorage.removeItem(k);
                 });
 
-                // Import new data
                 Object.keys(storageData).forEach(key => {
                     if (storageData[key] && (key.startsWith('editpro_') || key === 'token')) {
-                        localStorage.setItem(key, storageData[key]);
+                        const val = typeof storageData[key] === 'string'
+                            ? storageData[key]
+                            : JSON.stringify(storageData[key]);
+                        localStorage.setItem(key, val);
                     }
                 });
 
                 return true;
             } catch (err) {
-                console.error('Vault Error:', err);
+                console.error('Core Logic Fault:', err);
                 return false;
             }
         }
