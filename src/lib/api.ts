@@ -487,6 +487,24 @@ const api = {
             '/bookings': STORAGE_KEYS.STUDIO_BOOKINGS
         };
 
+        if (endpoint === '/auth/profile') {
+            const user = getFromStorage(STORAGE_KEYS.USER, {});
+            // Handle FormData or Object
+            const updates = payload instanceof FormData ? Object.fromEntries(payload.entries()) : payload;
+            const updatedUser = { ...user, ...updates };
+            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updatedUser));
+
+            // Also update in AUTH list
+            const auths = getFromStorage(STORAGE_KEYS.AUTH, []);
+            const authIndex = auths.findIndex((u: any) => u.id === user.id);
+            if (authIndex !== -1) {
+                auths[authIndex] = { ...auths[authIndex], ...updates };
+                setToStorage(STORAGE_KEYS.AUTH, auths);
+            }
+
+            return { data: updatedUser };
+        }
+
         const key = Object.keys(keyMap).find(k => endpoint.startsWith(k));
         if (key) {
             const id = endpoint.split('/').pop();
