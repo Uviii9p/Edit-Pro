@@ -23,7 +23,7 @@
   }
 
   tbody tr {
-    @apply bg-slate-900/30 hover:bg-slate-900/60 transition-all duration-300 backdrop-blur-sm group cursor-pointer;
+    @apply bg-slate-900/30 hover:bg-slate-900/60 transition-all duration-300 backdrop-blur-sm cursor-pointer;
   }
 
   tbody td {
