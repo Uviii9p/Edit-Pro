@@ -7,7 +7,7 @@ import {
     Calendar, Clock, IndianRupee, MessageSquare,
     MoreVertical, Plus, Send, Settings,
     ChevronRight, CheckCircle2, AlertCircle,
-    History, Zap, FileText, Share2,
+    History, Zap, Share2,
     Trash2, Edit3, User, List, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -37,7 +37,7 @@ export default function ProjectDetailPage() {
     const router = useRouter();
     const [project, setProject] = useState<ProjectDetail | null>(null);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'timeline' | 'team' | 'files'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'timeline' | 'team'>('overview');
     const [comment, setComment] = useState('');
     const user = useAuthStore((state: any) => state.user);
     const { notify } = useNotifications();
@@ -77,6 +77,7 @@ export default function ProjectDetailPage() {
         try {
             const resp = await api.get(`/projects/${id}`);
             setProject(resp.data);
+            
             // Fetch team members
             try {
                 const membersResp = await api.get(`/projects/${id}/members`);
@@ -274,7 +275,7 @@ export default function ProjectDetailPage() {
 
             {/* Navigation Tabs */}
             <nav className="flex items-center gap-2 border-b border-slate-800/60 pb-px">
-                {(['overview', 'tasks', 'timeline', 'team', 'files'] as const).map(tab => (
+                {(['overview', 'tasks', 'timeline', 'team'] as const).map(tab => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
@@ -343,7 +344,7 @@ export default function ProjectDetailPage() {
                                 <div className="glass-panel p-8 space-y-6">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                            <FileText className="text-indigo-400" size={20} />
+                                            <List className="text-indigo-400" size={20} />
                                             <h3 className="text-xl font-bold">Production Roadmap</h3>
                                         </div>
                                         <button onClick={() => setIsSettingsModalOpen(true)} className="p-2 hover:bg-slate-800 rounded-lg transition-all text-slate-500"><Edit3 size={16} /></button>
@@ -630,7 +631,7 @@ export default function ProjectDetailPage() {
                                             <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest leading-none">HIGH PRIORITY: Final Export by 18:00</span>
                                         </div>
                                         <div className="flex items-center gap-3 shrink-0 bg-slate-800/40 px-4 py-2 rounded-xl border border-white/5 opacity-40 hover:opacity-100 transition-opacity">
-                                            <FileText size={14} className="text-slate-500" />
+                                            <List size={14} className="text-slate-500" />
                                             <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Roadmap Synchronized</span>
                                         </div>
                                     </div>
@@ -744,7 +745,7 @@ export default function ProjectDetailPage() {
                                         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-slate-800/50 to-transparent" />
                                         
                                         <div className="flex items-center gap-4 mb-4 opacity-50 hover:opacity-100 transition-opacity">
-                                            <button className="p-2 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-slate-200 transition-colors"><FileText size={18} /></button>
+                                            <button className="p-2 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-slate-200 transition-colors"><Zap size={18} /></button>
                                             <button className="p-2 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-slate-200 transition-colors"><AlertCircle size={18} /></button>
                                             <div className="w-px h-4 bg-white/10" />
                                             <button className="p-2 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-slate-200 transition-colors cursor-default"><User size={18} /> <span className="text-[10px] font-black uppercase ml-1">@</span></button>
@@ -845,39 +846,6 @@ export default function ProjectDetailPage() {
                         )}
 
 
-                        {activeTab === 'files' && (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
-                                <div className="flex justify-between items-center bg-slate-900/40 p-8 rounded-[32px] border border-slate-800/60 backdrop-blur-xl">
-                                    <div>
-                                        <h3 className="text-3xl font-black text-white tracking-tighter mb-1 uppercase italic">Studio Vault</h3>
-                                        <p className="text-xs font-black text-blue-400 uppercase tracking-[0.3em]">Cloud Infrastructure for Production Assets</p>
-                                    </div>
-                                    <button className="px-8 py-4 bg-slate-100 rounded-2xl font-black text-slate-950 uppercase tracking-widest text-xs hover:bg-white transition-all transform active:scale-95 shadow-2xl">Upload Asset</button>
-                                </div>
-
-                                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-                                    {[1, 2, 3, 4].map(idx => (
-                                        <div key={idx} className="glass-panel p-6 group cursor-pointer hover:border-blue-500/30 transition-all">
-                                            <div className="w-full aspect-video bg-slate-950 rounded-[20px] mb-4 overflow-hidden border border-slate-800/50 relative">
-                                                <div className="absolute inset-0 flex items-center justify-center">
-                                                    <FileText size={40} className="text-slate-800 group-hover:text-blue-900 group-hover:scale-110 transition-all" />
-                                                </div>
-                                                <div className="absolute bottom-3 left-3 px-3 py-1 bg-slate-900/80 backdrop-blur-md rounded-lg text-[9px] font-black tracking-widest text-slate-400 uppercase">RAW_FILE</div>
-                                            </div>
-                                            <h5 className="font-bold text-slate-200 text-sm mb-1 truncate">Production_Asset_{idx}.mp4</h5>
-                                            <div className="flex items-center justify-between text-[10px] font-bold text-slate-600 uppercase tracking-widest">
-                                                <span>128 MB</span>
-                                                <span suppressHydrationWarning>{new Date().toLocaleDateString()}</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    <div className="border-2 border-dashed border-slate-800 rounded-[32px] flex flex-col items-center justify-center p-8 opacity-40 hover:opacity-100 hover:border-blue-500/50 transition-all cursor-pointer bg-slate-800/10">
-                                        <Plus size={32} className="text-slate-600 mb-2" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest">Add Files</span>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        )}
                     </AnimatePresence>
                 </main>
 

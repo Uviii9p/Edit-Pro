@@ -231,7 +231,7 @@ const api = {
         return { data: [] };
     },
 
-    post: async (endpoint: string, payload: any) => {
+    post: async (endpoint: string, payload: any, _config?: any) => {
         await new Promise(r => setTimeout(r, 50));
         const user = getCurrentUser();
 
@@ -349,7 +349,7 @@ const api = {
         return { data: payload };
     },
 
-    delete: async (endpoint: string) => {
+    delete: async (endpoint: string, _config?: any) => {
         await new Promise(r => setTimeout(r, 50));
         
         // Sub-resource DELETE
