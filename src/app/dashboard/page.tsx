@@ -5,7 +5,8 @@ import api from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import {
     Briefcase, Clock, AlertCircle,
-    Calendar, IndianRupee, ArrowUpRight, TrendingUp
+    Calendar, IndianRupee, ArrowUpRight, TrendingUp,
+    Cpu, Zap, CheckSquare
 } from 'lucide-react';
 import {
     XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area
@@ -66,21 +67,55 @@ export default function DashboardPage() {
 
     return (
         <div className="p-4 md:p-10 space-y-6 md:space-y-10">
-            <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mt-16 sm:mt-0">
-                <div className="space-y-1 w-full text-center sm:text-left">
-                    <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">Welcome, {user?.name?.split(' ')[0]}</h1>
-                    <p className="text-[10px] md:text-sm text-slate-500 font-bold tracking-tight uppercase tracking-widest opacity-80">Studio performance at peak potential.</p>
-                </div>
-                <div className="flex items-center gap-4 bg-slate-900/40 p-1.5 pl-4 rounded-2xl border border-slate-800/50 backdrop-blur-sm w-full sm:w-auto">
-                    <div className="text-right">
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Total Yearly Revenue</p>
-                        <p className="font-bold text-emerald-400 tracking-tight">₹{data?.revenueThisYear?.toLocaleString() || 0}</p>
+            <header className="space-y-8 mt-16 sm:mt-0 relative z-10">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                            <div className="w-2 h-2 rounded-full bg-blue-500 animate-ping" />
+                            <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em]">System: Optimal</span>
+                        </div>
+                        <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter italic">
+                            WELCOME, {user?.name?.split(' ')[0].toUpperCase()}
+                        </h1>
+                        <p className="text-sm text-slate-500 font-bold uppercase tracking-[0.2em] opacity-80">
+                            Directing the next generation of visual excellence.
+                        </p>
                     </div>
-                    <img
-                        src={user?.image || `https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=3b82f6&color=fff`}
-                        className="w-10 h-10 rounded-xl border border-slate-700/50 object-cover"
-                        alt="Profile"
-                    />
+                    
+                    <div className="flex items-center gap-6 bg-slate-900/60 p-4 rounded-3xl border border-white/5 backdrop-blur-3xl shadow-2xl">
+                        <div className="text-right border-r border-white/5 pr-6 hidden sm:block">
+                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Yearly Volume</p>
+                            <p className="text-xl font-black text-white tracking-tight mt-1">₹{data?.revenueThisYear?.toLocaleString() || 0}</p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <div className="relative">
+                                <img
+                                    src={user?.image || `https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=3b82f6&color=fff`}
+                                    className="w-12 h-12 rounded-2xl border-2 border-slate-800 object-cover shadow-xl"
+                                    alt="Profile"
+                                />
+                                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-4 border-slate-900 rounded-full" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Studio Pulse Monitor */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-blue-600/5 rounded-[32px] border border-blue-500/10 backdrop-blur-sm">
+                    {[
+                        { label: 'Active Nodes', val: '128', icon: Cpu },
+                        { label: 'Latency', val: '4ms', icon: Zap },
+                        { label: 'Sync Status', val: 'STABLE', icon: CheckSquare },
+                        { label: 'Uptime', val: '99.9%', icon: Clock },
+                    ].map((m, i) => (
+                        <div key={i} className="flex items-center gap-3 px-4 py-2 border-r border-white/5 last:border-0">
+                            <m.icon size={14} className="text-blue-400 opacity-50" />
+                            <div>
+                                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{m.label}</p>
+                                <p className="text-xs font-black text-slate-200 tracking-tighter">{m.val}</p>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </header>
 
@@ -90,22 +125,28 @@ export default function DashboardPage() {
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.1, ease: [0.23, 1, 0.32, 1] }}
+                        transition={{ delay: 0.2 + (idx * 0.1), ease: [0.23, 1, 0.32, 1] }}
                         key={stat.label}
-                        className="glass-card p-6 relative overflow-hidden group"
+                        className="glass-card p-8 group relative overflow-hidden ring-1 ring-white/5"
                     >
                         <div className="relative z-10 flex justify-between items-start">
-                            <div className={`p-2.5 rounded-lg bg-slate-950/50 ${stat.color} group-hover:scale-110 transition-transform duration-300 border border-slate-800/50`}>
-                                <stat.icon size={20} />
+                            <div className={cn(
+                                "p-3 rounded-2xl bg-slate-950/80 border border-white/5 transition-all duration-500 group-hover:scale-110 shadow-2xl",
+                                stat.color
+                            )}>
+                                <stat.icon size={24} />
                             </div>
-                            <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">+12% vs last month</div>
+                            <div className="flex flex-col items-end">
+                                <div className="text-[9px] font-black text-blue-500 uppercase tracking-widest bg-blue-500/10 px-2 py-0.5 rounded-md">PRO DATA</div>
+                                <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mt-2">+12.4%</div>
+                            </div>
                         </div>
-                        <div className="mt-5 relative z-10">
-                            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest leading-none">{stat.label}</p>
-                            <h3 className="text-3xl font-bold mt-2 tracking-tight">{stat.value}</h3>
+                        <div className="mt-8 relative z-10">
+                            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] leading-none mb-2">{stat.label}</p>
+                            <h3 className="text-4xl font-black text-white tracking-tighter">{stat.value}</h3>
                         </div>
-                        {/* Decorative Gradient Glow */}
-                        <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-blue-500/5 blur-[40px] rounded-full group-hover:bg-blue-500/10 transition-colors duration-500" />
+                        {/* Interactive Shine Effect */}
+                        <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-blue-500/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     </motion.div>
                 ))}
             </div>

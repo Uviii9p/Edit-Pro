@@ -3,10 +3,16 @@
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
+import { cn } from '@/lib/utils';
 import { AuthProvider } from "@/components/AuthProvider";
 import { Sidebar } from "@/components/Sidebar";
 import { NotificationProvider } from "@/hooks/useNotifications";
 import { DeadlineObserver } from "@/components/DeadlineObserver";
+import { CommandPalette } from "@/components/CommandPalette";
+import { GlobalStatusBar } from "@/components/GlobalStatusBar";
+import { AnimatePresence, motion } from "framer-motion";
+import { PageWrapper } from "@/components/PageWrapper";
+import { StudioAI } from "@/components/StudioAI";
 
 export default function ClientLayout({
     children,
@@ -15,6 +21,7 @@ export default function ClientLayout({
 }) {
     const pathname = usePathname();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isAIOpen, setIsAIOpen] = useState(false);
     const isAuthPage = ['/login', '/register', '/forgot-password'].includes(pathname);
 
     // Close sidebar when route changes
@@ -35,6 +42,9 @@ export default function ClientLayout({
         <AuthProvider>
             <NotificationProvider>
                 <DeadlineObserver />
+                <CommandPalette />
+                <GlobalStatusBar />
+                <StudioAI isOpen={isAIOpen} onClose={() => setIsAIOpen(false)} />
                 {!isAuthPage && (
                     <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-slate-900/50 backdrop-blur-md border-b border-slate-800 flex items-center justify-between px-6 z-[60]">
                         <span className="font-bold text-xl tracking-tight text-blue-500">EditPro</span>
@@ -66,9 +76,13 @@ export default function ClientLayout({
                         </>
                     )}
 
-                    <main className={`flex-1 w-full min-h-screen flex flex-col ${!isAuthPage ? 'pt-16 lg:pt-0' : ''}`}>
-                        <div className="flex-1 w-full max-w-[1600px] mx-auto">
-                            {children}
+                    <main className={cn("flex-1 w-full min-h-screen flex flex-col relative", !isAuthPage ? 'pt-16 lg:pt-0' : '')}>
+                        <div className="flex-1 w-full max-w-[1600px] mx-auto pb-20">
+                            <AnimatePresence mode="wait">
+                                <PageWrapper key={pathname}>
+                                    {children}
+                                </PageWrapper>
+                            </AnimatePresence>
                         </div>
                     </main>
                 </div>

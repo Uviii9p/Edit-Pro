@@ -186,53 +186,70 @@ export default function TasksPage() {
                     {...provided.draggableProps}
                     {...provided.dragHandleProps}
                     className={cn(
-                        "p-4 bg-slate-900 rounded-xl border border-slate-800 hover:border-slate-700 transition-all shadow-lg group",
-                        !isMobile && "cursor-grab active:cursor-grabbing",
-                        snapshot.isDragging && "ring-2 ring-blue-500/50 shadow-2xl opacity-90 scale-[1.02]"
+                        "p-6 bg-slate-950/40 backdrop-blur-3xl rounded-[28px] border border-white/5 transition-all duration-500 group relative shadow-2xl overflow-hidden",
+                        !isMobile && "cursor-grab active:cursor-grabbing hover:border-blue-500/30",
+                        snapshot.isDragging && "ring-2 ring-blue-500 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.8)] opacity-100 scale-[1.05] bg-slate-900"
                     )}
                     style={{ ...provided.draggableProps.style }}
                 >
-                    <div className="flex justify-between items-start mb-2">
-                        <div className="flex items-center gap-2">
-                            {!isMobile && <GripVertical size={14} className="text-slate-600 group-hover:text-slate-400 transition-colors flex-shrink-0" />}
-                            <span className={cn("px-2 py-0.5 rounded text-[10px] font-bold uppercase", getPriorityColor(task.priority))}>
+                    {/* Visual Pulse for active dragging */}
+                    {snapshot.isDragging && <div className="absolute inset-0 bg-blue-500/[0.03] animate-pulse" />}
+                    
+                    <div className="flex justify-between items-start mb-6 relative z-10">
+                        <div className="flex items-center gap-4">
+                            {!isMobile && <GripVertical size={16} className="text-slate-700 group-hover:text-blue-500 transition-colors flex-shrink-0" />}
+                            <div className={cn(
+                                "px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border shadow-inner",
+                                getPriorityColor(task.priority)
+                            )}>
                                 {task.priority}
+                            </div>
+                        </div>
+                        <div className={cn("flex gap-2", isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0")}>
+                            <button onClick={() => setEditingTask(task)} className="p-2.5 hover:bg-white/5 rounded-xl text-slate-500 hover:text-white transition-all shadow-xl"><Edit2 size={16} /></button>
+                            <button onClick={() => deleteTask(task.id)} className="p-2.5 hover:bg-red-500/10 rounded-xl text-slate-500 hover:text-red-400 transition-all shadow-xl"><Trash2 size={16} /></button>
+                        </div>
+                    </div>
+                    
+                    <div className="relative z-10 mb-6">
+                        <h4 className="text-lg font-black text-slate-100 tracking-tight leading-snug group-hover:text-blue-400 transition-colors">{task.title}</h4>
+                        {task.description && <p className="text-xs text-slate-500 mt-2 font-medium line-clamp-2 leading-relaxed italic">{task.description}</p>}
+                    </div>
+
+                    <div className="pt-5 border-t border-white/5 flex items-center justify-between relative z-10">
+                        <div className="flex items-center gap-3">
+                            <Clock size={16} className="text-slate-600" />
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mono-label">
+                                {task.deadline ? new Date(task.deadline).toLocaleDateString() : 'NO_DEADLINE'}
                             </span>
                         </div>
-                        <div className={cn("flex gap-1", isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100 transition-opacity")}>
-                            <button onClick={() => setEditingTask(task)} className="p-1.5 hover:text-blue-400 text-slate-500 transition-colors cursor-pointer z-10" title="Edit">
-                                <Edit2 size={14} />
-                            </button>
-                            <button onClick={() => deleteTask(task.id)} className="p-1.5 hover:text-red-400 text-slate-500 transition-colors cursor-pointer z-10" title="Delete">
-                                <Trash2 size={14} />
-                            </button>
-                        </div>
-                    </div>
-                    <h4 className={cn("font-bold text-slate-100 text-sm", !isMobile && "ml-6")}>{task.title}</h4>
-                    {task.description && <p className={cn("text-xs text-slate-500 mt-1 line-clamp-2", !isMobile && "ml-6")}>{task.description}</p>}
-                    <div className={cn("mt-3 flex items-center justify-between text-[10px] text-slate-500", !isMobile && "ml-6")}>
-                        <div className="flex items-center gap-1">
-                            <Clock size={11} />
-                            <span>{task.deadline ? new Date(task.deadline).toLocaleDateString() : 'No deadline'}</span>
-                        </div>
                         {task.project && (
-                            <span className="bg-slate-800 px-2 py-0.5 rounded text-[10px] font-medium text-slate-400 truncate max-w-[100px]">{task.project.name}</span>
+                            <div className="px-3 py-1 bg-slate-900/60 rounded-full border border-white/5 flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest truncate max-w-[80px]">{task.project.name}</span>
+                            </div>
                         )}
                     </div>
-                    {/* Mobile: Move to next status button */}
+
+                    {/* Desktop Hover Accessory */}
+                    {!isMobile && (
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                    )}
+
+                    {/* Mobile: Move Actions */}
                     {isMobile && (
-                        <div className="mt-3 pt-3 border-t border-slate-800 flex gap-2">
+                        <div className="mt-6 pt-5 border-t border-white/5 grid grid-cols-2 gap-3 relative z-10">
                             {(['TODO', 'IN_PROGRESS', 'COMPLETED'] as Status[]).filter(s => s !== task.status).map(s => (
                                 <button
                                     key={s}
                                     onClick={() => updateTaskStatus(task.id, s)}
-                                    className={cn("flex-1 text-[10px] font-bold py-1.5 rounded-lg transition-all",
-                                        s === 'COMPLETED' ? "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20" :
-                                            s === 'IN_PROGRESS' ? "bg-blue-500/10 text-blue-400 hover:bg-blue-500/20" :
-                                                "bg-slate-800 text-slate-400 hover:bg-slate-700"
+                                    className={cn("flex items-center justify-center gap-2 text-[9px] font-black py-3 rounded-2xl uppercase tracking-widest transition-all shadow-xl outline-none",
+                                        s === 'COMPLETED' ? "bg-emerald-600/10 text-emerald-400 border border-emerald-500/20" :
+                                            s === 'IN_PROGRESS' ? "bg-blue-600/10 text-blue-400 border border-blue-500/20" :
+                                                "bg-slate-800 text-slate-400 border border-white/5"
                                     )}
                                 >
-                                    → {getStatusLabel(s)}
+                                    {getStatusLabel(s)}
                                 </button>
                             ))}
                         </div>
@@ -243,42 +260,58 @@ export default function TasksPage() {
     );
 
     return (
-        <div className="p-4 md:p-8 space-y-6 md:space-y-8">
-            <header className="flex flex-col gap-4">
-                <div className="flex justify-between items-start">
-                    <div>
-                        <h1 className="text-xl md:text-3xl font-bold">Studio Tasks</h1>
-                        <p className="text-xs md:text-sm text-slate-400">Manage your editing workflow.</p>
+        <div className="p-8 md:p-12 space-y-12 max-w-[1500px] mx-auto min-h-screen">
+            <header className="flex flex-col gap-10">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                            <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em]">SYNC: ACTIVE</span>
+                        </div>
+                        <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter uppercase italic flex items-center gap-4">
+                            Studio Tasks
+                            <span className="px-3 py-1 bg-slate-800 border border-white/5 rounded-xl text-[10px] font-black not-italic text-slate-500 tracking-widest">{tasks.length} NODES</span>
+                        </h1>
+                        <p className="text-sm text-slate-500 font-bold uppercase tracking-[0.2em] opacity-80">Synchronizing production directives.</p>
                     </div>
-                    <button
-                        onClick={() => { setEditingTask(null); setIsModalOpen(true); }}
-                        className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 px-4 md:px-6 py-2 md:py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-blue-900/40 text-sm md:text-base"
-                    >
-                        <Plus size={18} />
-                        <span className="hidden sm:inline">New Task</span>
-                        <span className="sm:hidden">Add</span>
-                    </button>
+                    
+                    <div className="flex bg-slate-900/60 p-1.5 rounded-[22px] border border-white/5 backdrop-blur-3xl shadow-2xl">
+                        <button
+                            onClick={() => setView('board')}
+                            className={cn(
+                                "px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                view === 'board' ? "bg-blue-600 text-white shadow-xl shadow-blue-900/40" : "text-slate-500 hover:text-white"
+                            )}
+                        >BOARD mode</button>
+                        <button
+                            onClick={() => setView('list')}
+                            className={cn(
+                                "px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                view === 'list' ? "bg-blue-600 text-white shadow-xl shadow-blue-900/40" : "text-slate-500 hover:text-white"
+                            )}
+                        >LIST mode</button>
+                    </div>
                 </div>
-                <div className="flex gap-3">
-                    <div className="relative flex-1">
-                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+
+                <div className="flex flex-col sm:flex-row gap-6 relative z-10">
+                    <div className="relative flex-1 group">
+                        <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors">
+                            <Search size={22} />
+                        </div>
                         <input
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
-                            placeholder="Search tasks..."
-                            className="w-full bg-slate-900 border border-slate-800 pl-10 pr-4 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+                            placeholder="Filter production nodes (type task ID or title)..."
+                            className="w-full bg-slate-900/40 backdrop-blur-2xl border border-white/5 pl-16 pr-8 py-6 rounded-[28px] text-lg font-bold outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500/20 transition-all placeholder:text-slate-700 placeholder:italic"
                         />
                     </div>
-                    <div className="flex bg-slate-900 rounded-lg p-1 border border-slate-800">
-                        <button
-                            onClick={() => setView('board')}
-                            className={cn("px-3 md:px-4 py-1.5 rounded-md text-xs md:text-sm font-medium transition-all", view === 'board' ? "bg-blue-600 text-white shadow-lg" : "text-slate-500")}
-                        >Board</button>
-                        <button
-                            onClick={() => setView('list')}
-                            className={cn("px-3 md:px-4 py-1.5 rounded-md text-xs md:text-sm font-medium transition-all", view === 'list' ? "bg-blue-600 text-white shadow-lg" : "text-slate-500")}
-                        >List</button>
-                    </div>
+                    <button
+                        onClick={() => { setEditingTask(null); setIsModalOpen(true); }}
+                        className="flex items-center justify-center gap-4 bg-blue-600 hover:bg-blue-500 px-8 py-6 rounded-[28px] font-black tracking-widest uppercase text-xs text-white shadow-[0_20px_40px_-10px_rgba(37,99,235,0.4)] transition-all group active:scale-95"
+                    >
+                        <Plus size={20} className="group-hover:rotate-90 transition-transform duration-300" />
+                        New Directive
+                    </button>
                 </div>
             </header>
 
@@ -290,14 +323,22 @@ export default function TasksPage() {
                             <div className="hidden md:grid md:grid-cols-3 gap-6 min-h-[calc(100vh-280px)]">
                                 {columns.map(col => {
                                     const columnTasks = filteredTasks.filter(t => t.status === col.status);
+                                    const accentColors: any = {
+                                        'TODO': 'from-slate-400/20 to-transparent border-slate-400/10',
+                                        'IN_PROGRESS': 'from-blue-600/10 to-transparent border-blue-500/10',
+                                        'COMPLETED': 'from-emerald-600/10 to-transparent border-emerald-500/10'
+                                    };
+                                    
                                     return (
-                                        <div key={col.status} className="flex flex-col gap-4">
-                                            <div className="flex items-center justify-between px-1">
-                                                <div className="flex items-center gap-2.5">
-                                                    <div className={cn("w-2.5 h-2.5 rounded-full", col.dotColor)} />
-                                                    <h3 className="font-bold text-slate-300 uppercase tracking-widest text-xs">{col.title}</h3>
+                                        <div key={col.status} className="flex flex-col gap-6">
+                                            <div className="flex items-center justify-between px-3">
+                                                <div className="flex items-center gap-4">
+                                                    <div className={cn("w-3 h-3 rounded-full shadow-[0_0_15px_rgba(255,255,255,0.2)]", col.dotColor)} />
+                                                    <h3 className="font-black text-slate-400 uppercase tracking-[0.2em] text-[10px] italic">{col.title}</h3>
                                                 </div>
-                                                <span className="bg-slate-800 px-2.5 py-0.5 rounded-lg text-xs font-bold text-slate-500">{columnTasks.length}</span>
+                                                <div className="px-3 py-1 bg-slate-900 rounded-full border border-white/5">
+                                                    <span className="text-[10px] font-black text-slate-400 tracking-widest uppercase">{columnTasks.length}</span>
+                                                </div>
                                             </div>
                                             <Droppable droppableId={col.status}>
                                                 {(provided, snapshot) => (
@@ -305,16 +346,19 @@ export default function TasksPage() {
                                                         ref={provided.innerRef}
                                                         {...provided.droppableProps}
                                                         className={cn(
-                                                            "flex-1 p-3 rounded-2xl border-2 border-dashed space-y-3 overflow-y-auto transition-all duration-200 min-h-[200px]",
-                                                            snapshot.isDraggingOver ? col.borderHighlight : "border-slate-800/60",
-                                                            "bg-slate-900/30"
+                                                            "flex-1 p-6 rounded-[34px] border-2 border-dashed space-y-6 overflow-y-auto transition-all duration-500 h-full min-h-[500px] scrollbar-hide perspective-1000",
+                                                            snapshot.isDraggingOver 
+                                                                ? cn("bg-gradient-to-b scale-[0.98] border-opacity-50", accentColors[col.status]) 
+                                                                : "border-white/5 bg-slate-950/20"
                                                         )}>
                                                         {columnTasks.map((task, index) => renderTaskCard(task, false, index))}
                                                         {provided.placeholder}
                                                         {columnTasks.length === 0 && !snapshot.isDraggingOver && (
-                                                            <div className="flex flex-col items-center justify-center py-12 text-slate-600 pointer-events-none">
-                                                                <CheckCircle2 size={32} className="mb-2 opacity-30" />
-                                                                <p className="text-xs font-medium">No tasks here</p>
+                                                            <div className="flex-1 flex flex-col items-center justify-center py-40 opacity-20 filter grayscale hover:grayscale-0 transition-all duration-700">
+                                                                <div className="w-24 h-24 rounded-full border-2 border-dashed border-slate-600 flex items-center justify-center mb-6">
+                                                                    <CheckCircle2 size={40} className="text-slate-500" />
+                                                                </div>
+                                                                <p className="text-sm font-black uppercase tracking-[0.3em]">No Directives</p>
                                                             </div>
                                                         )}
                                                     </div>

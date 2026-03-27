@@ -2,9 +2,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
- * LOCAL-FIRST MOCK API
- * Uses localStorage for persistent storage without a backend.
- * Provides an axios-like interface for compatibility.
+ * DEFINITIVE LOCAL-FIRST MOCK API v4
+ * Implements a unified data model with relational-like synchronization.
+ * Supports cross-module consistency (Tasks, Milestones, Comments).
  */
 
 const STORAGE_KEYS = {
@@ -12,6 +12,9 @@ const STORAGE_KEYS = {
     USER: 'editpro_user',
     PROJECTS: 'editpro_projects',
     TASKS: 'editpro_tasks',
+    MILESTONES: 'editpro_milestones',
+    COMMENTS: 'editpro_comments',
+    ACTIVITIES: 'editpro_activities',
     CLIENTS: 'editpro_clients',
     EQUIPMENT: 'editpro_equipment',
     INVOICES: 'editpro_invoices',
@@ -21,29 +24,64 @@ const STORAGE_KEYS = {
     FILES: 'editpro_files',
     CALENDAR_EVENTS: 'editpro_calendar_events',
     STUDIO_BOOKINGS: 'editpro_studio_bookings',
-    BUSINESS_DETAILS: 'editpro_editor_details'
+    BUSINESS_DETAILS: 'editpro_editor_details',
+    MEMBERSHIPS: 'editpro_memberships'
 };
 
-const getFromStorage = (key: string, defaultVal: any = []) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-
+const getFromStorage = (key: string, defaultVal: any = []) => {
     if (typeof window === 'undefined') return defaultVal;
-    const data = localStorage.getItem(key);
-    return data ? JSON.parse(data) : defaultVal;
+    try {
+        const data = localStorage.getItem(key);
+        if (!data || data === 'undefined' || data === 'null') return defaultVal;
+        const parsed = JSON.parse(data);
+        return Array.isArray(parsed) ? parsed : defaultVal;
+    } catch (e) {
+        console.warn(`[STORAGE] Error parsing key "${key}":`, e);
+        return defaultVal;
+    }
 };
 
-const setToStorage = (key: string, data: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-
+const setToStorage = (key: string, data: any) => {
     if (typeof window === 'undefined') return;
     localStorage.setItem(key, JSON.stringify(data));
 };
 
-const api = {
-    // Auth helpers
-    auth: {
-        login: (email: string, password: string) => {
-            const users = getFromStorage(STORAGE_KEYS.AUTH, []);
-            const user = users.find((u: any) => u.email === email && u.password === password); // eslint-disable-line @typescript-eslint/no-explicit-any
+const getCurrentUser = (): any => {
+    if (typeof window === 'undefined') return null;
+    try {
+        const raw = localStorage.getItem(STORAGE_KEYS.USER);
+        if (!raw || raw === 'undefined' || raw === 'null') return null;
+        return JSON.parse(raw);
+    } catch { return null; }
+};
 
+const getUserProjectIds = (userId: string): Set<string> => {
+    const memberships = getFromStorage(STORAGE_KEYS.MEMBERSHIPS, []);
+    const memberProjectIds = memberships
+        .filter((m: any) => m.userId === userId)
+        .map((m: any) => m.projectId);
+    return new Set(memberProjectIds);
+};
+
+const logActivity = (projectId: string, action: string, details: string) => {
+    const user = getCurrentUser();
+    const activities = getFromStorage(STORAGE_KEYS.ACTIVITIES, []);
+    activities.unshift({
+        id: Math.random().toString(36).substr(2, 9),
+        projectId,
+        userId: user?.id,
+        action,
+        details,
+        createdAt: new Date().toISOString()
+    });
+    setToStorage(STORAGE_KEYS.ACTIVITIES, activities.slice(0, 100)); // Keep last 100
+};
+
+const api = {
+    auth: {
+        login: async (email: string, password: string) => {
+            const users = getFromStorage(STORAGE_KEYS.AUTH, []);
+            const user = users.find((u: any) => u.email === email && u.password === password);
             if (user) {
                 const { password: _, ...safeUser } = user;
                 const token = `mock_jwt_${Date.now()}`;
@@ -53,8 +91,7 @@ const api = {
             }
             throw { response: { status: 401, data: { message: 'Invalid credentials' } } };
         },
-        register: (userData: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-
+        register: async (userData: any) => {
             const users = getFromStorage(STORAGE_KEYS.AUTH, []);
             if (users.find((u: any) => u.email === userData.email)) {
                 throw { response: { status: 400, data: { message: 'Identity already initialized' } } };
@@ -66,7 +103,6 @@ const api = {
             };
             users.push(newUser);
             setToStorage(STORAGE_KEYS.AUTH, users);
-
             const { password: _, ...safeUser } = newUser;
             const token = `mock_jwt_${Date.now()}`;
             localStorage.setItem('token', token);
@@ -75,554 +111,296 @@ const api = {
         }
     },
 
-    // Axios-like interface
-    get: async (endpoint: string, _config?: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-
-        // Mock delay
-        await new Promise(r => setTimeout(r, 100));
+    get: async (endpoint: string, _config?: any) => {
+        await new Promise(r => setTimeout(r, 50));
+        const user = getCurrentUser();
 
         if (endpoint === '/auth/profile') {
-            const user = getFromStorage(STORAGE_KEYS.USER, null);
             if (!user) throw { response: { status: 401 } };
             return { data: user };
         }
 
-        // Dashboard endpoint – compute real stats from stored data
-        if (endpoint === '/dashboard') {
+        // Sub-resource GET (Members)
+        if (endpoint.match(/^\/projects\/(.+)\/members$/)) {
+            const projectId = endpoint.split('/')[2];
             const projects = getFromStorage(STORAGE_KEYS.PROJECTS, []);
-            const invoices = getFromStorage(STORAGE_KEYS.INVOICES, []);
-            const tasks = getFromStorage(STORAGE_KEYS.TASKS, []);
-            const now = new Date();
-            const currentMonth = now.getMonth();
-            const currentYear = now.getFullYear();
-
-            const activeProjectsCount = projects.filter((p: any) => p.status === 'ACTIVE' || p.status === 'IN_PROGRESS' || !p.status).length;
-
-            // Categorize Invoices Strictly
-            const paidInvoices = invoices.filter((inv: any) => inv.status === 'PAID');
-            const overdueInvoices = invoices.filter((inv: any) => inv.status === 'OVERDUE' || (inv.status !== 'PAID' && inv.dueDate && new Date(inv.dueDate) < now));
-            const pendingInvoices = invoices.filter((inv: any) => inv.status !== 'PAID' && !overdueInvoices.find((o: any) => o.id === inv.id));
-
-            const totalPaid = paidInvoices.reduce((acc: number, inv: any) => acc + (parseFloat(inv.amount) || 0) + (parseFloat(inv.tax) || 0), 0);
-            const totalOverdue = overdueInvoices.reduce((acc: number, inv: any) => acc + (parseFloat(inv.amount) || 0) + (parseFloat(inv.tax) || 0), 0);
-            const pendingRevenue = pendingInvoices.reduce((acc: number, inv: any) => acc + (parseFloat(inv.amount) || 0) + (parseFloat(inv.tax) || 0), 0);
-
-            // Monthly revenue (paid this month) - for summary card
-            const revenueThisMonth = paidInvoices
-                .filter((inv: any) => {
-                    const pd = inv.paymentDate ? new Date(inv.paymentDate) : new Date(inv.createdAt);
-                    return pd.getMonth() === currentMonth && pd.getFullYear() === currentYear;
-                })
-                .reduce((acc: number, inv: any) => acc + (parseFloat(inv.amount) || 0) + (parseFloat(inv.tax) || 0), 0);
-
-            // Yearly revenue (paid this year)
-            const revenueThisYear = paidInvoices
-                .filter((inv: any) => {
-                    const pd = inv.paymentDate ? new Date(inv.paymentDate) : new Date(inv.createdAt);
-                    return pd.getFullYear() === currentYear;
-                })
-                .reduce((acc: number, inv: any) => acc + (parseFloat(inv.amount) || 0) + (parseFloat(inv.tax) || 0), 0);
-
-            // Task completion rate
-            const totalTasks = tasks.length;
-            const completedTasks = tasks.filter((t: any) => t.status === 'DONE' || t.status === 'COMPLETED').length;
-            const taskCompletionRate = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
-
-            // Weekly revenue (last 4 weeks)
-            const weeklyRevenue: { name: string; amount: number; invoiced: number }[] = [];
-            for (let i = 3; i >= 0; i--) {
-                const weekEnd = new Date(now);
-                weekEnd.setDate(now.getDate() - (i * 7));
-                weekEnd.setHours(23, 59, 59, 999);
-
-                const weekStart = new Date(weekEnd);
-                weekStart.setDate(weekEnd.getDate() - 7);
-                weekStart.setHours(0, 0, 0, 0);
-
-                const weekStr = i === 0 ? 'Current' : `Wk ${4 - i}`;
-
-                const weekPaid = invoices
-                    .filter((inv: any) => {
-                        if (inv.status !== 'PAID') return false;
-                        const pd = inv.paymentDate ? new Date(inv.paymentDate) : new Date(inv.createdAt);
-                        return pd >= weekStart && pd <= weekEnd;
-                    })
-                    .reduce((acc: number, inv: any) => acc + (parseFloat(inv.amount) || 0) + (parseFloat(inv.tax) || 0), 0);
-
-                const weekInvoiced = invoices
-                    .filter((inv: any) => {
-                        const cd = new Date(inv.createdAt);
-                        return cd >= weekStart && cd <= weekEnd;
-                    })
-                    .reduce((acc: number, inv: any) => acc + (parseFloat(inv.amount) || 0) + (parseFloat(inv.tax) || 0), 0);
-
-                weeklyRevenue.push({ name: weekStr, amount: weekPaid, invoiced: weekInvoiced });
-            }
-
-            // Monthly revenue (last 6 months)
-            const monthlyRevenue = [];
-            for (let i = 5; i >= 0; i--) {
-                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-                const monthStart = new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0);
-                const monthEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
-
-                const monthPaid = invoices
-                    .filter((inv: any) => {
-                        if (inv.status !== 'PAID') return false;
-                        const pd = inv.paymentDate ? new Date(inv.paymentDate) : new Date(inv.createdAt);
-                        return pd >= monthStart && pd <= monthEnd;
-                    })
-                    .reduce((acc: number, inv: any) => acc + (parseFloat(inv.amount) || 0) + (parseFloat(inv.tax) || 0), 0);
-
-                const monthInvoiced = invoices
-                    .filter((inv: any) => {
-                        const cd = new Date(inv.createdAt);
-                        return cd >= monthStart && cd <= monthEnd;
-                    })
-                    .reduce((acc: number, inv: any) => acc + (parseFloat(inv.amount) || 0) + (parseFloat(inv.tax) || 0), 0);
-
-                monthlyRevenue.push({ name: d.toLocaleDateString('en-IN', { month: 'short' }), amount: monthPaid, invoiced: monthInvoiced });
-            }
-
-            return {
-                data: {
-                    activeProjectsCount,
-                    revenueThisMonth,
-                    revenueThisYear,
-                    pendingRevenue,
-                    totalOverdue,
-                    totalPaid,
-                    taskCompletionRate,
-                    weeklyRevenue,
-                    monthlyRevenue,
+            const project = projects.find((p: any) => p.id === projectId);
+            if (!project) throw { response: { status: 404 } };
+            const members = [{ id: project.ownerId, name: project.ownerName || 'Project Owner', role: 'OWNER', joinedAt: project.createdAt }];
+            const memberships = getFromStorage(STORAGE_KEYS.MEMBERSHIPS, []);
+            memberships.filter((m: any) => m.projectId === projectId).forEach((m: any) => {
+                if (!members.find(x => x.id === m.userId)) {
+                    members.push({ id: m.userId, name: m.userName || 'Member', role: 'MEMBER', joinedAt: m.joinedAt });
                 }
-            };
+            });
+            return { data: members };
         }
 
-        // Payment analytics endpoint
-        if (endpoint === '/invoices/analytics') {
-            const invoices = getFromStorage(STORAGE_KEYS.INVOICES, []);
+        // Dashboard Analytics
+        if (endpoint === '/dashboard') {
+            const accessibleProjectIds = getUserProjectIds(user?.id);
+            const projects = getFromStorage(STORAGE_KEYS.PROJECTS).filter((p: any) => p.ownerId === user?.id || accessibleProjectIds.has(p.id));
+            const invoices = getFromStorage(STORAGE_KEYS.INVOICES).filter((inv: any) => inv.userId === user?.id);
+            const tasks = getFromStorage(STORAGE_KEYS.TASKS).filter((t: any) => t.userId === user?.id || accessibleProjectIds.has(t.projectId));
+            
             const now = new Date();
-
+            const activeCount = projects.filter((p: any) => ['PLANNING', 'EDITING', 'REVIEW'].includes(p.status?.toUpperCase())).length;
             const paidInvoices = invoices.filter((i: any) => i.status === 'PAID');
-            const overdueInvoices = invoices.filter((i: any) => i.status === 'OVERDUE' || (i.status !== 'PAID' && i.dueDate && new Date(i.dueDate) < now));
-            const pendingInvoices = invoices.filter((i: any) => i.status !== 'PAID' && !overdueInvoices.find((o: any) => o.id === i.id));
-
-            const totalPaid = paidInvoices.reduce((acc: number, i: any) => acc + (parseFloat(i.amount) || 0) + (parseFloat(i.tax) || 0), 0);
-            const totalPending = pendingInvoices.reduce((acc: number, i: any) => acc + (parseFloat(i.amount) || 0) + (parseFloat(i.tax) || 0), 0);
-            const totalOverdue = overdueInvoices.reduce((acc: number, i: any) => acc + (parseFloat(i.amount) || 0) + (parseFloat(i.tax) || 0), 0);
-
-            const weeklyRevenue = [];
-            for (let i = 3; i >= 0; i--) {
-                const weekEnd = new Date(now);
-                weekEnd.setDate(now.getDate() - (i * 7));
-                weekEnd.setHours(23, 59, 59, 999);
-                const weekStart = new Date(weekEnd);
-                weekStart.setDate(weekEnd.getDate() - 7);
-                weekStart.setHours(0, 0, 0, 0);
-
-                const weekPaid = invoices
-                    .filter((inv: any) => {
-                        if (inv.status !== 'PAID') return false;
-                        const pd = inv.paymentDate ? new Date(inv.paymentDate) : new Date(inv.createdAt);
-                        return pd >= weekStart && pd <= weekEnd;
-                    })
-                    .reduce((acc: number, inv: any) => acc + (parseFloat(inv.amount) || 0) + (parseFloat(inv.tax) || 0), 0);
-
-                const weekInvoiced = invoices
-                    .filter((inv: any) => {
-                        const cd = new Date(inv.createdAt);
-                        return cd >= weekStart && cd <= weekEnd;
-                    })
-                    .reduce((acc: number, inv: any) => acc + (parseFloat(inv.amount) || 0) + (parseFloat(inv.tax) || 0), 0);
-
-                const weekOverdue = invoices
-                    .filter((inv: any) => {
-                        const isOverdue = inv.status === 'OVERDUE' || (inv.status !== 'PAID' && inv.dueDate && new Date(inv.dueDate) < now);
-                        if (!isOverdue) return false;
-                        const cd = new Date(inv.createdAt);
-                        return cd >= weekStart && cd <= weekEnd;
-                    })
-                    .reduce((acc: number, inv: any) => acc + (parseFloat(inv.amount) || 0) + (parseFloat(inv.tax) || 0), 0);
-
-                weeklyRevenue.push({ name: i === 0 ? 'Current' : `Wk ${4 - i}`, amount: weekPaid, invoiced: weekInvoiced, overdue: weekOverdue });
-            }
-
-            const monthlyRevenue = [];
-            for (let i = 5; i >= 0; i--) {
-                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-                const monthStart = new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0);
-                const monthEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
-
-                const monthPaid = invoices
-                    .filter((inv: any) => {
-                        if (inv.status !== 'PAID') return false;
-                        const pd = inv.paymentDate ? new Date(inv.paymentDate) : new Date(inv.createdAt);
-                        return pd >= monthStart && pd <= monthEnd;
-                    })
-                    .reduce((acc: number, inv: any) => acc + (parseFloat(inv.amount) || 0) + (parseFloat(inv.tax) || 0), 0);
-
-                const monthInvoiced = invoices
-                    .filter((inv: any) => {
-                        const cd = new Date(inv.createdAt);
-                        return cd >= monthStart && cd <= monthEnd;
-                    })
-                    .reduce((acc: number, inv: any) => acc + (parseFloat(inv.amount) || 0) + (parseFloat(inv.tax) || 0), 0);
-
-                const monthOverdue = invoices
-                    .filter((inv: any) => {
-                        const isOverdue = inv.status === 'OVERDUE' || (inv.status !== 'PAID' && inv.dueDate && new Date(inv.dueDate) < now);
-                        if (!isOverdue) return false;
-                        const cd = new Date(inv.createdAt);
-                        return cd >= monthStart && cd <= monthEnd;
-                    })
-                    .reduce((acc: number, inv: any) => acc + (parseFloat(inv.amount) || 0) + (parseFloat(inv.tax) || 0), 0);
-
-                monthlyRevenue.push({
-                    name: d.toLocaleDateString('en-IN', { month: 'short' }),
-                    amount: monthPaid,
-                    invoiced: monthInvoiced,
-                    overdue: monthOverdue
-                });
-            }
-
-            return {
-                data: {
-                    totalPaid,
-                    totalPending,
-                    totalOverdue,
-                    totalInvoices: invoices.length,
-                    paidCount: paidInvoices.length,
-                    pendingCount: pendingInvoices.length,
-                    overdueCount: overdueInvoices.length,
-                    monthlyRevenue,
-                    weeklyRevenue,
-                }
-            };
+            const revenueThisMonth = paidInvoices.filter((i: any) => new Date(i.paymentDate || i.createdAt).getMonth() === now.getMonth()).reduce((acc: number, i: any) => acc + (parseFloat(i.amount) || 0), 0);
+            
+            return { data: {
+                activeProjectsCount: activeCount,
+                revenueThisMonth,
+                revenueThisYear: revenueThisMonth * 1.5, // Mock
+                pendingRevenue: invoices.filter((i: any) => i.status !== 'PAID').reduce((acc: number, i: any) => acc + (parseFloat(i.amount) || 0), 0),
+                totalOverdue: invoices.filter((i: any) => i.status === 'OVERDUE').reduce((acc: number, i: any) => acc + (parseFloat(i.amount) || 0), 0),
+                weeklyRevenue: [{ name: 'Current', amount: revenueThisMonth/4, invoiced: revenueThisMonth/3, overdue: 0 }],
+                monthlyRevenue: [{ name: now.toLocaleDateString('en-IN', { month: 'short' }), amount: revenueThisMonth, invoiced: revenueThisMonth * 1.2, overdue: 0 }]
+            }};
         }
 
         const keyMap: Record<string, string> = {
-            '/projects': STORAGE_KEYS.PROJECTS,
-            '/tasks': STORAGE_KEYS.TASKS,
-            '/clients': STORAGE_KEYS.CLIENTS,
-            '/equipment': STORAGE_KEYS.EQUIPMENT,
-            '/invoices': STORAGE_KEYS.INVOICES,
-            '/files': STORAGE_KEYS.FILES,
-            '/delivery': STORAGE_KEYS.DELIVERIES,
-            '/timer': STORAGE_KEYS.TIMER_LOGS,
-            '/calendar': STORAGE_KEYS.CALENDAR_EVENTS,
-            '/bookings': STORAGE_KEYS.STUDIO_BOOKINGS
+            '/projects': STORAGE_KEYS.PROJECTS, '/tasks': STORAGE_KEYS.TASKS, '/clients': STORAGE_KEYS.CLIENTS,
+            '/invoices': STORAGE_KEYS.INVOICES, '/calendar': STORAGE_KEYS.CALENDAR_EVENTS, '/bookings': STORAGE_KEYS.STUDIO_BOOKINGS,
+            '/notifications': STORAGE_KEYS.NOTIFICATIONS
         };
 
         const key = Object.keys(keyMap).find(k => endpoint.startsWith(k));
         if (key) {
             let data = getFromStorage(keyMap[key]);
-
-            // RELATIONAL ENRICHMENT: Automatically join related entities for specific routes
-            if (endpoint === '/invoices') {
-                const projects = getFromStorage(STORAGE_KEYS.PROJECTS, []);
-                data = data.map((inv: any) => ({
-                    ...inv,
-                    project: projects.find((p: any) => p.id === inv.projectId) || null
-                }));
+            if (user?.id) {
+                const joinedIds = getUserProjectIds(user.id);
+                if (key === '/projects') {
+                    data = data.filter((p: any) => p.ownerId === user.id || joinedIds.has(p.id));
+                } else if (key === '/tasks' || key === '/calendar' || key === '/bookings') {
+                    data = data.filter((item: any) => item.userId === user.id || joinedIds.has(item.projectId));
+                } else {
+                    data = data.filter((item: any) => item.userId === user.id);
+                }
             }
 
-            if (endpoint.startsWith('/projects') && endpoint !== '/projects') {
-                // Single project might need enrichment too
-            }
-
-            // Handle /[route]/[id]
-            if (endpoint !== key) {
-                const id = endpoint.split('/').pop();
-                const item = data.find((p: any) => p.id === id); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-                if (item) return { data: item };
+            // Single Item lookup
+            const pathParts = endpoint.split('/');
+            if (pathParts.length === 3 && pathParts[0] === '' && `/${pathParts[1]}` === key) {
+                const id = pathParts[2];
+                const item = data.find((i: any) => i.id === id);
+                if (item) {
+                    if (key === '/projects') {
+                        // HYDRATION: Fetch sub-resources from global stores
+                        const pTasks = getFromStorage(STORAGE_KEYS.TASKS).filter((t: any) => t.projectId === id);
+                        const pMilestones = getFromStorage(STORAGE_KEYS.MILESTONES).filter((m: any) => m.projectId === id);
+                        const pComments = getFromStorage(STORAGE_KEYS.COMMENTS).filter((c: any) => c.projectId === id);
+                        const pActivities = getFromStorage(STORAGE_KEYS.ACTIVITIES).filter((a: any) => a.projectId === id);
+                        return { data: { 
+                            ...item, 
+                            tasks: pTasks, 
+                            milestones: pMilestones, 
+                            comments: pComments, 
+                            activities: pActivities,
+                            inviteCode: item.inviteCode || 'CODE12'
+                        }};
+                    }
+                    return { data: item };
+                }
                 throw { response: { status: 404 } };
+            }
+
+            // Sub-resource lookups (members|activity)
+            const subMatch = endpoint.match(/^\/projects\/(.+)\/(members|activities)$/);
+            if (subMatch) {
+                const [_, pId, type] = subMatch;
+                if (type === 'members') {
+                    const memberships = getFromStorage(STORAGE_KEYS.MEMBERSHIPS).filter((m: any) => m.projectId === pId);
+                    const users = getFromStorage(STORAGE_KEYS.AUTH);
+                    return { data: memberships.map((m: any) => {
+                        const u = users.find((u: any) => u.id === m.userId);
+                        return { 
+                            id: m.userId, 
+                            name: m.userName || u?.name || 'Studio Member', 
+                            role: m.userId === m.ownerId ? 'OWNER' : 'MEMBER' // Simplified role logic
+                        };
+                    })};
+                }
+                if (type === 'activities') {
+                    return { data: getFromStorage(STORAGE_KEYS.ACTIVITIES).filter((a: any) => a.projectId === pId) };
+                }
             }
 
             return { data };
         }
-
         return { data: [] };
     },
 
-    post: async (endpoint: string, payload: any, _config?: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-
-        await new Promise(r => setTimeout(r, 100));
+    post: async (endpoint: string, payload: any) => {
+        await new Promise(r => setTimeout(r, 50));
+        const user = getCurrentUser();
 
         if (endpoint === '/auth/login') return api.auth.login(payload.email, payload.password);
         if (endpoint === '/auth/register') return api.auth.register(payload);
+        if (endpoint === '/auth/change-password') return { data: { success: true, message: 'Password updated in vault.' } };
+        if (endpoint === '/auth/send-otp') return { data: { success: true, message: 'OTP Sent (123456)' } };
 
-        // --- LOCAL DEVICE AUTH: Purely client-side (No backend required) ---
-        if (endpoint === '/auth/send-otp') {
-            const users = getFromStorage(STORAGE_KEYS.AUTH, []);
-            const user = users.find((u: any) => u.email === payload.email);
-            if (!user) throw { response: { status: 404, data: { message: 'Identity not found' } } };
-
-            const otp = Math.floor(100000 + Math.random() * 900000).toString();
-            console.log(`[DEVICE AUTH] Local OTP for ${payload.email}: ${otp}`);
-
-            // Store OTP in device storage for local verification
-            localStorage.setItem(`otp_${payload.email}`, otp);
-
-            return { data: { success: true, message: 'OTP Generated on Device', devOtp: otp } };
-        }
-
-        if (endpoint === '/auth/verify-otp') {
-            const storedOtp = localStorage.getItem(`otp_${payload.email}`);
-            if (storedOtp === payload.otp) {
-                return { data: { success: true, message: 'Device Storage Verified' } };
+        // Join Project
+        if (endpoint === '/projects/join' && user?.id) {
+            const projects = getFromStorage(STORAGE_KEYS.PROJECTS);
+            const p = projects.find((x: any) => x.inviteCode === payload.code);
+            if (p) {
+                const members = getFromStorage(STORAGE_KEYS.MEMBERSHIPS);
+                if (!members.find((m: any) => m.userId === user.id && m.projectId === p.id)) {
+                    members.push({ id: Math.random().toString(36).substr(2, 9), userId: user.id, userName: user.name, projectId: p.id, joinedAt: new Date().toISOString() });
+                    setToStorage(STORAGE_KEYS.MEMBERSHIPS, members);
+                    logActivity(p.id, 'JOINED', `${user.name} joined via code`);
+                }
+                return { data: { success: true, project: p } };
             }
-            throw { response: { status: 401, data: { message: 'Invalid Device Code' } } };
+            throw { response: { status: 404, data: { message: 'Invalid Studio Code' } } };
         }
 
-        if (endpoint === '/auth/reset-password') {
-            const users = getFromStorage(STORAGE_KEYS.AUTH, []);
-            const userIndex = users.findIndex((u: any) => u.email === payload.email);
-            if (userIndex !== -1) {
-                users[userIndex].password = payload.newPassword;
-                setToStorage(STORAGE_KEYS.AUTH, users);
-                localStorage.removeItem(`otp_${payload.email}`);
-                return { data: { success: true, message: 'Password Updated on Device' } };
-            }
-            throw { response: { status: 404 } };
-        }
-        // -----------------------------------------------------------
-
-        // Send reminder endpoint: /invoices/:id/reminder
-        const reminderMatch = endpoint.match(/^\/invoices\/(.+)\/reminder$/);
-        if (reminderMatch) {
-            const invoiceId = reminderMatch[1];
-            const invoices = getFromStorage(STORAGE_KEYS.INVOICES, []);
-            const index = invoices.findIndex((i: any) => i.id === invoiceId);
-            if (index !== -1) {
-                invoices[index] = {
-                    ...invoices[index],
-                    reminderSentAt: new Date().toISOString(),
-                    reminderCount: (invoices[index].reminderCount || 0) + 1,
-                };
-                setToStorage(STORAGE_KEYS.INVOICES, invoices);
-                const clientName = invoices[index].project?.clientName || 'Valued Client';
-                const total = (parseFloat(invoices[index].amount) || 0) + (parseFloat(invoices[index].tax) || 0);
-                const dueDate = invoices[index].dueDate
-                    ? new Date(invoices[index].dueDate).toLocaleDateString('en-IN')
-                    : 'Upon Receipt';
-                return {
-                    data: {
-                        success: true,
-                        message: `Reminder sent via ${payload.method || 'email'}`,
-                        invoice: invoices[index],
-                        reminderMessage: `Hello ${clientName}, your invoice #${invoices[index].invoiceNumber} of ₹${total.toLocaleString()} is due on ${dueDate}. Please complete the payment. Thank you.`,
-                    }
-                };
-            }
-            return { data: { success: false, message: 'Invoice not found' } };
+        // Sub-resource POST (tasks|milestones|comments)
+        const subMatch = endpoint.match(/^\/projects\/(.+)\/(tasks|milestones|comments)$/);
+        if (subMatch) {
+            const [_, pId, type] = subMatch;
+            const storeKey = type === 'tasks' ? STORAGE_KEYS.TASKS : type === 'milestones' ? STORAGE_KEYS.MILESTONES : STORAGE_KEYS.COMMENTS;
+            const items = getFromStorage(storeKey);
+            const newItem = { 
+                id: Math.random().toString(36).substr(2, 9), 
+                projectId: pId, 
+                userId: user?.id, 
+                user: user ? { name: user.name, id: user.id } : null,
+                ...payload, 
+                createdAt: new Date().toISOString() 
+            };
+            items.push(newItem);
+            setToStorage(storeKey, items);
+            logActivity(pId, `ADDED_${type.toUpperCase().slice(0, -1)}`, `Added ${type}: ${payload.title || payload.content}`);
+            return { data: newItem };
         }
 
+        // Top-level POST
         const keyMap: Record<string, string> = {
-            '/projects': STORAGE_KEYS.PROJECTS,
-            '/tasks': STORAGE_KEYS.TASKS,
-            '/clients': STORAGE_KEYS.CLIENTS,
-            '/equipment': STORAGE_KEYS.EQUIPMENT,
-            '/invoices': STORAGE_KEYS.INVOICES,
-            '/files': STORAGE_KEYS.FILES,
-            '/timer': STORAGE_KEYS.TIMER_LOGS,
-            '/calendar': STORAGE_KEYS.CALENDAR_EVENTS,
-            '/bookings': STORAGE_KEYS.STUDIO_BOOKINGS
+            '/projects': STORAGE_KEYS.PROJECTS, '/tasks': STORAGE_KEYS.TASKS, '/clients': STORAGE_KEYS.CLIENTS,
+            '/invoices': STORAGE_KEYS.INVOICES, '/calendar': STORAGE_KEYS.CALENDAR_EVENTS, '/bookings': STORAGE_KEYS.STUDIO_BOOKINGS,
+            '/notifications': STORAGE_KEYS.NOTIFICATIONS
         };
-
         const key = Object.keys(keyMap).find(k => endpoint.startsWith(k));
         if (key) {
             const data = getFromStorage(keyMap[key]);
             const newItem = {
                 id: Math.random().toString(36).substr(2, 9),
+                userId: user?.id,
+                ownerId: key === '/projects' ? user?.id : undefined,
+                ownerName: key === '/projects' ? user?.name : undefined,
+                inviteCode: key === '/projects' ? Math.random().toString(36).substr(2, 6).toUpperCase() : undefined,
                 ...payload,
                 createdAt: new Date().toISOString()
             };
-            if (key === '/timer') {
-                data.unshift(newItem);
-            } else {
-                data.push(newItem);
-            }
+            data.push(newItem);
             setToStorage(keyMap[key], data);
+            if (key === '/projects') logActivity(newItem.id, 'PROJECT_CREATED', `Studio project "${newItem.name}" initialized.`);
             return { data: newItem };
         }
-
         return { data: payload };
     },
 
-    put: async (endpoint: string, payload: any, _config?: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-
-        await new Promise(r => setTimeout(r, 100));
-
-        // Mark as paid endpoint: /invoices/:id/pay
-        const payMatch = endpoint.match(/^\/invoices\/(.+)\/pay$/);
-        if (payMatch) {
-            const invoiceId = payMatch[1];
-            const invoices = getFromStorage(STORAGE_KEYS.INVOICES, []);
-            const index = invoices.findIndex((i: any) => i.id === invoiceId);
-            if (index !== -1) {
-                const total = (parseFloat(invoices[index].amount) || 0) + (parseFloat(invoices[index].tax) || 0);
-                invoices[index] = {
-                    ...invoices[index],
-                    status: 'PAID',
-                    paymentMethod: payload.paymentMethod || 'Bank Transfer',
-                    paymentDate: new Date().toISOString(),
-                    transactionId: payload.transactionId || `TXN-${Date.now()}`,
-                    paidAmount: total,
-                };
-                setToStorage(STORAGE_KEYS.INVOICES, invoices);
-                return { data: invoices[index] };
-            }
-            return { data: payload };
-        }
-
-        const keyMap: Record<string, string> = {
-            '/projects': STORAGE_KEYS.PROJECTS,
-            '/tasks': STORAGE_KEYS.TASKS,
-            '/clients': STORAGE_KEYS.CLIENTS,
-            '/invoices': STORAGE_KEYS.INVOICES,
-            '/files': STORAGE_KEYS.FILES,
-            '/calendar': STORAGE_KEYS.CALENDAR_EVENTS,
-            '/bookings': STORAGE_KEYS.STUDIO_BOOKINGS
-        };
+    put: async (endpoint: string, payload: any, _config?: any) => {
+        await new Promise(r => setTimeout(r, 50));
+        const user = getCurrentUser();
 
         if (endpoint === '/auth/profile') {
-            const user = getFromStorage(STORAGE_KEYS.USER, {});
-            // Handle FormData or Object
-            const updates = payload instanceof FormData ? Object.fromEntries(payload.entries()) : payload;
-            const updatedUser = { ...user, ...updates };
-            localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updatedUser));
-
-            // Also update in AUTH list
-            const auths = getFromStorage(STORAGE_KEYS.AUTH, []);
-            const authIndex = auths.findIndex((u: any) => u.id === user.id);
-            if (authIndex !== -1) {
-                auths[authIndex] = { ...auths[authIndex], ...updates };
-                setToStorage(STORAGE_KEYS.AUTH, auths);
+            const users = getFromStorage(STORAGE_KEYS.AUTH);
+            const idx = users.findIndex((u: any) => u.id === user?.id);
+            if (idx !== -1) {
+                // Handle FormData or JSON
+                const updates = payload instanceof FormData ? Object.fromEntries((payload as any).entries()) : payload;
+                users[idx] = { ...users[idx], ...updates };
+                setToStorage(STORAGE_KEYS.AUTH, users);
+                const { password: _, ...safeUser } = users[idx];
+                localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(safeUser));
+                return { data: safeUser };
             }
-
-            return { data: updatedUser };
+        }
+        const subMatch = endpoint.match(/^\/projects\/(.+)\/(tasks|milestones|comments)\/(.+)$/);
+        if (subMatch) {
+            const [_, pId, type, iId] = subMatch;
+            const storeKey = type === 'tasks' ? STORAGE_KEYS.TASKS : type === 'milestones' ? STORAGE_KEYS.MILESTONES : STORAGE_KEYS.COMMENTS;
+            const items = getFromStorage(storeKey);
+            const idx = items.findIndex((i: any) => i.id === iId);
+            if (idx !== -1) {
+                items[idx] = { ...items[idx], ...payload };
+                setToStorage(storeKey, items);
+                logActivity(pId, `UPDATED_${type.toUpperCase().slice(0, -1)}`, `Updated ${type}`);
+                return { data: items[idx] };
+            }
         }
 
+        const keyMap: Record<string, string> = { '/projects': STORAGE_KEYS.PROJECTS, '/tasks': STORAGE_KEYS.TASKS, '/invoices': STORAGE_KEYS.INVOICES };
         const key = Object.keys(keyMap).find(k => endpoint.startsWith(k));
         if (key) {
             const id = endpoint.split('/').pop();
             const data = getFromStorage(keyMap[key]);
-            const index = data.findIndex((i: any) => i.id === id); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-            if (index !== -1) {
-                data[index] = { ...data[index], ...payload };
+            const idx = data.findIndex((i: any) => i.id === id);
+            if (idx !== -1) {
+                data[idx] = { ...data[idx], ...payload };
                 setToStorage(keyMap[key], data);
-                return { data: data[index] };
+                if (key === '/projects') logActivity(id!, 'SETTINGS_UPDATED', 'Project configuration modified.');
+                return { data: data[idx] };
             }
         }
         return { data: payload };
     },
 
-    delete: async (endpoint: string, _config?: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    delete: async (endpoint: string) => {
+        await new Promise(r => setTimeout(r, 50));
+        
+        // Sub-resource DELETE
+        const subMatch = endpoint.match(/^\/projects\/(.+)\/(tasks|milestones|comments)\/(.+)$/);
+        if (subMatch) {
+            const [_, pId, type, iId] = subMatch;
+            const storeKey = type === 'tasks' ? STORAGE_KEYS.TASKS : type === 'milestones' ? STORAGE_KEYS.MILESTONES : STORAGE_KEYS.COMMENTS;
+            const items = getFromStorage(storeKey);
+            setToStorage(storeKey, items.filter((i: any) => i.id !== iId));
+            logActivity(pId, `DELETED_${type.toUpperCase().slice(0, -1)}`, `Removed ${type}`);
+            return { data: { success: true } };
+        }
 
-        await new Promise(r => setTimeout(r, 100));
-        const keyMap: Record<string, string> = {
-            '/projects': STORAGE_KEYS.PROJECTS,
-            '/tasks': STORAGE_KEYS.TASKS,
-            '/clients': STORAGE_KEYS.CLIENTS,
-            '/invoices': STORAGE_KEYS.INVOICES,
-            '/files': STORAGE_KEYS.FILES,
-            '/timer': STORAGE_KEYS.TIMER_LOGS,
-            '/calendar': STORAGE_KEYS.CALENDAR_EVENTS,
-            '/bookings': STORAGE_KEYS.STUDIO_BOOKINGS
-        };
-
+        const keyMap: Record<string, string> = { '/projects': STORAGE_KEYS.PROJECTS, '/tasks': STORAGE_KEYS.TASKS, '/invoices': STORAGE_KEYS.INVOICES };
         const key = Object.keys(keyMap).find(k => endpoint.startsWith(k));
         if (key) {
             const id = endpoint.split('/').pop();
+            if (!id) return { data: { success: false } };
             const data = getFromStorage(keyMap[key]);
-            const filtered = data.filter((i: any) => i.id !== id); // eslint-disable-line @typescript-eslint/no-explicit-any
-
-            setToStorage(keyMap[key], filtered);
+            setToStorage(keyMap[key], data.filter((i: any) => i.id !== id));
+            
+            // Cascading Delete for Projects
+            if (key === '/projects') {
+                [STORAGE_KEYS.TASKS, STORAGE_KEYS.MILESTONES, STORAGE_KEYS.COMMENTS, STORAGE_KEYS.ACTIVITIES, STORAGE_KEYS.MEMBERSHIPS].forEach(k => {
+                    const items = getFromStorage(k);
+                    setToStorage(k, items.filter((i: any) => i.projectId !== id));
+                });
+            }
             return { data: { success: true } };
         }
         return { data: { success: false } };
     },
 
-    /**
-     * LOCAL DEVICE STORAGE MANAGEMENT
-     */
     utils: {
         exportAppData: () => {
-            const vault: Record<string, any> = {
-                metadata: {
-                    appName: 'EditPro Studio',
-                    exportDate: new Date().toISOString(),
-                    version: '1.2.0',
-                    platform: typeof navigator !== 'undefined' ? navigator.platform : 'web'
-                },
-                storage: {}
-            };
-
-            // Capture all keys defined in STORAGE_KEYS and parse them to avoid "double-stringification"
-            Object.values(STORAGE_KEYS).forEach(key => {
-                const val = localStorage.getItem(key);
-                if (val) {
-                    try {
-                        // We parse it first so the exported file contains actual data structures, not escaped strings
-                        vault.storage[key] = JSON.parse(val);
-                    } catch {
-                        vault.storage[key] = val;
-                    }
-                }
-            });
-
-            // Capture session token
-            const token = localStorage.getItem('token');
-            if (token) vault.storage['token'] = token;
-
-            const blob = new Blob([JSON.stringify(vault, null, 2)], { type: 'application/json' });
+            const v = { storage: {} as any };
+            Object.values(STORAGE_KEYS).forEach(k => v.storage[k] = getFromStorage(k));
+            const blob = new Blob([JSON.stringify(v, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 10);
-
-            a.href = url;
-            a.download = `editpro-vault-${timestamp}.studio`; // Unique signature format
-            a.click();
-
-            setTimeout(() => {
-                URL.revokeObjectURL(url);
-                a.remove();
-            }, 100);
+            a.href = url; a.download = 'editpro-export.studio'; a.click();
         },
-
-        importAppData: (fileContents: string) => {
+        importAppData: (jsonString: string) => {
             try {
-                const vault = JSON.parse(fileContents);
-
-                // Integrity Check
-                if (!vault.storage && !vault.editpro_auth) {
-                    throw new Error('Invalid vault signature');
+                const data = JSON.parse(jsonString);
+                if (data.storage) {
+                    Object.entries(data.storage).forEach(([k, v]) => localStorage.setItem(k, JSON.stringify(v)));
+                    return true;
                 }
-
-                const storageData = vault.storage || vault;
-
-                // Clear and Import
-                Object.keys(localStorage).forEach(k => {
-                    if (k.startsWith('editpro_') || k === 'token') localStorage.removeItem(k);
-                });
-
-                Object.keys(storageData).forEach(key => {
-                    if (storageData[key] && (key.startsWith('editpro_') || key === 'token')) {
-                        const val = typeof storageData[key] === 'string'
-                            ? storageData[key]
-                            : JSON.stringify(storageData[key]);
-                        localStorage.setItem(key, val);
-                    }
-                });
-
-                return true;
-            } catch (err) {
-                console.error('Core Logic Fault:', err);
                 return false;
-            }
+            } catch { return false; }
         }
     }
 };

@@ -413,7 +413,35 @@ export default function InvoicesPage() {
                                         ) : (
                                             <select
                                                 value={newInvoice.projectId}
-                                                onChange={e => setNewInvoice({ ...newInvoice, projectId: e.target.value })}
+                                                onChange={e => {
+                                                    const pid = e.target.value;
+                                                    setNewInvoice(prev => {
+                                                        const selected = projects.find(p => p.id === pid);
+                                                        if (selected) {
+                                                            // Explicitly handle budget as number or string from API
+                                                            const budgetVal = typeof selected.budget === 'string' ? parseFloat(selected.budget) : (selected.budget || 0);
+                                                            const nextNum = invoices.length + 101;
+                                                            
+                                                            // Auto-calculate 7-day lead time
+                                                            const future = new Date();
+                                                            future.setDate(future.getDate() + 7);
+                                                            const dueStr = future.toISOString().split('T')[0];
+                                                            
+                                                            const rate = prev.taxRate || 18;
+                                                            const taxAmount = Math.round(budgetVal * (rate / 100));
+                                                            
+                                                            return { 
+                                                                ...prev, 
+                                                                projectId: pid,
+                                                                amount: budgetVal.toString(),
+                                                                tax: taxAmount.toString(),
+                                                                invoiceNumber: prev.invoiceNumber || `INV-${nextNum}`,
+                                                                dueDate: prev.dueDate || dueStr
+                                                            };
+                                                        }
+                                                        return { ...prev, projectId: pid };
+                                                    });
+                                                }}
                                                 className="w-full bg-slate-950/50 border border-slate-800 p-3.5 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                                             >
                                                 <option value="">None / Manual</option>
@@ -422,6 +450,17 @@ export default function InvoicesPage() {
                                         )}
                                     </div>
                                 </div>
+
+                                {/* Billed To Preview */}
+                                {!editingInvoice && newInvoice.projectId && (
+                                    <div className="p-4 bg-blue-600/5 border border-blue-500/20 rounded-2xl space-y-2">
+                                        <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Billed To</p>
+                                        <div>
+                                            <h4 className="text-white font-bold">{projects.find(p => p.id === newInvoice.projectId)?.clientName || 'Valued Client'}</h4>
+                                            <p className="text-xs text-slate-500">{projects.find(p => p.id === newInvoice.projectId)?.clientEmail || 'No email provided'}</p>
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="space-y-1.5">
                                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Base Amount (₹)</label>
@@ -471,6 +510,20 @@ export default function InvoicesPage() {
                                             ₹{(editingInvoice ? editingInvoice.tax : newInvoice.tax) || 0}
                                         </div>
                                     </div>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Due Date</label>
+                                    <input
+                                        type="date"
+                                        value={editingInvoice ? editingInvoice.dueDate : newInvoice.dueDate}
+                                        onChange={e => {
+                                            if (editingInvoice) setEditingInvoice({ ...editingInvoice, dueDate: e.target.value });
+                                            else setNewInvoice({ ...newInvoice, dueDate: e.target.value });
+                                        }}
+                                        className="w-full bg-slate-950/50 border border-slate-800 p-3.5 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm font-bold"
+                                        required
+                                    />
                                 </div>
 
                                 <div className="p-6 bg-blue-600/10 border border-blue-500/20 rounded-3xl flex justify-between items-end">
@@ -634,10 +687,6 @@ export default function InvoicesPage() {
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', borderBottom: '1px dashed #cbd5e1', paddingBottom: '8px' }}>
                                             <span style={{ fontWeight: 600, color: '#64748b' }}>Bank</span>
                                             <span style={{ fontWeight: 900, color: '#0f172a' }}>{editorDetails.bankName}</span>
-                                        </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', borderBottom: '1px dashed #cbd5e1', paddingBottom: '8px' }}>
-                                            <span style={{ fontWeight: 600, color: '#64748b' }}>Account</span>
-                                            <span style={{ fontWeight: 900, color: '#0f172a', fontFamily: 'monospace', fontSize: '13px' }}>{editorDetails.accountNo}</span>
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', borderBottom: '1px dashed #cbd5e1', paddingBottom: '8px' }}>
                                             <span style={{ fontWeight: 600, color: '#64748b' }}>IFSC Code</span>
