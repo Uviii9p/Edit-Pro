@@ -67,86 +67,103 @@ export default function DashboardPage() {
 
     return (
         <div className="p-4 md:p-10 space-y-6 md:space-y-10">
-            <header className="space-y-8 mt-16 sm:mt-0 relative z-10">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-                    <div className="space-y-2">
+            <header className="space-y-10 mt-16 sm:mt-0 relative z-10">
+                <div className="absolute -top-20 -left-20 w-96 h-96 bg-blue-600/10 blur-[120px] rounded-full pointer-events-none" />
+                
+                <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-10">
+                    <div className="space-y-4">
                         <div className="flex items-center gap-3">
-                            <div className="w-2 h-2 rounded-full bg-blue-500 animate-ping" />
-                            <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em]">System: Optimal</span>
+                            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse shadow-[0_0_10px_rgba(59,130,246,0.8)]" />
+                            <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.5em] bg-blue-500/5 px-3 py-1 rounded-full border border-blue-500/10">STATION_01: ONLINE</span>
                         </div>
-                        <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter italic">
-                            WELCOME, {user?.name?.split(' ')[0].toUpperCase()}
+                        <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter italic leading-none drop-shadow-2xl">
+                            COMMAND <span className="text-blue-500">CENTER</span>
                         </h1>
-                        <p className="text-sm text-slate-500 font-bold uppercase tracking-[0.2em] opacity-80">
-                            Directing the next generation of visual excellence.
+                        <p className="text-sm text-slate-500 font-bold uppercase tracking-[0.3em] opacity-80 flex items-center gap-3">
+                            <Cpu size={14} className="text-slate-700" /> Orchestrating cinematic delivery for {user?.name?.toUpperCase()}
                         </p>
                     </div>
                     
-                    <div className="flex items-center gap-6 bg-slate-900/60 p-4 rounded-3xl border border-white/5 backdrop-blur-3xl shadow-2xl">
-                        <div className="text-right border-r border-white/5 pr-6 hidden sm:block">
-                            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Yearly Volume</p>
-                            <p className="text-xl font-black text-white tracking-tight mt-1">₹{data?.revenueThisYear?.toLocaleString() || 0}</p>
+                    <div className="flex items-center gap-8 bg-slate-900/40 p-6 rounded-[32px] border border-white/5 backdrop-blur-3xl shadow-[0_40px_80px_-15px_rgba(0,0,0,0.6)]">
+                        <div className="text-right border-r border-white/5 pr-8 hidden sm:block">
+                            <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mb-1.5">ANNUAL_VELOCITY</p>
+                            <div className="flex items-center gap-3 justify-end">
+                                <TrendingUp size={16} className="text-emerald-500" />
+                                <p className="text-2xl font-black text-white tracking-tight italic">₹{data?.revenueThisYear?.toLocaleString() || 0}</p>
+                            </div>
                         </div>
                         <div className="flex items-center gap-4">
-                            <div className="relative">
+                            <div className="relative group cursor-pointer">
+                                <div className="absolute -inset-1 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-[22px] blur opacity-20 group-hover:opacity-60 transition duration-500" />
                                 <img
                                     src={user?.image || `https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=3b82f6&color=fff`}
-                                    className="w-12 h-12 rounded-2xl border-2 border-slate-800 object-cover shadow-xl"
+                                    className="relative w-14 h-14 rounded-[20px] border-2 border-slate-950 object-cover shadow-2xl transition-transform group-hover:scale-105"
                                     alt="Profile"
                                 />
-                                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-4 border-slate-900 rounded-full" />
+                                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 border-4 border-slate-950 rounded-full shadow-[0_0_15px_rgba(16,185,129,0.6)] animate-pulse" />
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Studio Pulse Monitor */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-blue-600/5 rounded-[32px] border border-blue-500/10 backdrop-blur-sm">
+                {/* Tactical Operations HUD */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 p-6 bg-slate-950/40 rounded-[40px] border border-white/5 backdrop-blur-xl shadow-inner relative overflow-hidden">
+                    <div className="absolute inset-0 bg-blue-600/[0.02] pointer-events-none" />
                     {[
-                        { label: 'Active Nodes', val: '128', icon: Cpu },
-                        { label: 'Latency', val: '4ms', icon: Zap },
-                        { label: 'Sync Status', val: 'STABLE', icon: CheckSquare },
-                        { label: 'Uptime', val: '99.9%', icon: Clock },
+                        { label: 'Production Nodes', val: 'Active (12)', icon: Cpu, color: 'text-blue-500' },
+                        { label: 'Neural Latency', val: '0.04 ms', icon: Zap, color: 'text-amber-500' },
+                        { label: 'Encryption', val: 'AES-256', icon: CheckSquare, color: 'text-emerald-500' },
+                        { label: 'Uptime', val: '99.98%', icon: Clock, color: 'text-blue-400' },
                     ].map((m, i) => (
-                        <div key={i} className="flex items-center gap-3 px-4 py-2 border-r border-white/5 last:border-0">
-                            <m.icon size={14} className="text-blue-400 opacity-50" />
+                        <div key={i} className="flex items-center gap-5 px-6 py-2 border-r border-white/5 last:border-0 group/stat">
+                            <div className={cn("p-2.5 rounded-xl bg-slate-900 border border-white/5 transition-all group-hover/stat:scale-110", m.color)}>
+                                <m.icon size={16} className="opacity-80" />
+                            </div>
                             <div>
-                                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{m.label}</p>
-                                <p className="text-xs font-black text-slate-200 tracking-tighter">{m.val}</p>
+                                <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest leading-none mb-1.5 transition-colors group-hover/stat:text-white">{m.label}</p>
+                                <p className="text-xs font-black text-slate-300 tracking-tighter uppercase italic">{m.val}</p>
                             </div>
                         </div>
                     ))}
                 </div>
             </header>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            {/* Matrix Stats Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
                 {stats.map((stat, idx) => (
                     <motion.div
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 + (idx * 0.1), ease: [0.23, 1, 0.32, 1] }}
                         key={stat.label}
-                        className="glass-card p-8 group relative overflow-hidden ring-1 ring-white/5"
+                        className="glass-card p-10 group relative overflow-hidden group/card shadow-[0_30px_60px_-15px_rgba(0,0,0,0.4)] hover:shadow-blue-500/10 transition-all duration-700 hover:bg-slate-900/40"
                     >
-                        <div className="relative z-10 flex justify-between items-start">
+                        {/* Dynamic Background Fog */}
+                        <div className={cn("absolute -bottom-10 -right-10 w-32 h-32 blur-3xl opacity-0 group-hover/card:opacity-20 transition-all duration-700", stat.color.replace('text', 'bg'))} />
+                        
+                        <div className="relative z-10 flex justify-between items-start mb-10">
                             <div className={cn(
-                                "p-3 rounded-2xl bg-slate-950/80 border border-white/5 transition-all duration-500 group-hover:scale-110 shadow-2xl",
+                                "p-4 rounded-[22px] bg-slate-950 border border-white/5 transition-all duration-700 group-hover/card:bg-slate-900 group-hover/card:scale-110 shadow-3xl",
                                 stat.color
                             )}>
-                                <stat.icon size={24} />
+                                <stat.icon size={28} strokeWidth={2.5} />
                             </div>
-                            <div className="flex flex-col items-end">
-                                <div className="text-[9px] font-black text-blue-500 uppercase tracking-widest bg-blue-500/10 px-2 py-0.5 rounded-md">PRO DATA</div>
-                                <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mt-2">+12.4%</div>
+                            <div className="flex flex-col items-end gap-1">
+                                <div className="text-[8px] font-black text-white/40 uppercase tracking-[0.3em] border border-white/5 px-2 py-0.5 rounded-full">DATAFEED</div>
+                                <div className="flex items-center gap-1.5 mt-2">
+                                    <ArrowUpRight size={14} className="text-emerald-500" />
+                                    <span className="text-[10px] font-black text-emerald-500 tracking-widest uppercase">SYSTM_OK</span>
+                                </div>
                             </div>
                         </div>
-                        <div className="mt-8 relative z-10">
-                            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] leading-none mb-2">{stat.label}</p>
-                            <h3 className="text-4xl font-black text-white tracking-tighter">{stat.value}</h3>
+                        
+                        <div className="relative z-10 space-y-2">
+                            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.4em] italic opacity-60 group-hover/card:opacity-100 transition-opacity">{stat.label}</p>
+                            <h3 className="text-4xl font-black text-white tracking-tighter italic">{stat.value}</h3>
                         </div>
-                        {/* Interactive Shine Effect */}
-                        <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-blue-500/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                        {/* Animated Underline */}
+                        <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-blue-500/0 to-transparent group-hover/card:via-blue-500/50 transition-all duration-700" />
                     </motion.div>
                 ))}
             </div>
